@@ -3,7 +3,7 @@ const mysql = require('mysql');
 const session = require('express-session');
 const app = express();
 const connection = mysql.createConnection({
-    host: 'localhost',
+    host: '192.168.100.25',
     user: 'test',
     password: 'test',
     database: 'web_app'
