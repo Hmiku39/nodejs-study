@@ -18,10 +18,11 @@ app.use(
 app.use((req, res, next) => {
     if (req.session.userId === undefined) {
         console.log('ログインしていません');
-        res.locals.username = 'ゲスト';
+        res.locals.name = 'ゲスト';
     } else {
         console.log('ログインしています');
-        res.locals.username = req.session.username;
+        res.locals.name = req.session.name;
+        console.log(req.session.name);
     }
     next();
 });
@@ -69,7 +70,7 @@ app.post('/login', (req, res) => {
             if (results.length > 0) {
                 if (req.body.password === results[0].password){
                     req.session.userId = results[0].id;
-                    req.session.username = results[0].username;
+                    req.session.name = results[0].name;
                     res.redirect('/');
                 } else {
                     res.redirect('/login');
