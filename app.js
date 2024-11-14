@@ -2,6 +2,12 @@ const express = require('express');
 const mysql = require('mysql');
 const session = require('express-session');
 const app = express();
+
+//時刻取得
+require('date-utils');
+
+
+
 const connection = mysql.createConnection({
     host: '192.168.100.25',
     user: 'test',
@@ -17,12 +23,14 @@ app.use(
 );
 app.use((req, res, next) => {
     if (req.session.userId === undefined) {
-        console.log('ログインしていません');
+        console.log('ゲストアクセス');
         res.locals.name = 'ゲスト';
+        res.locals.isLoggedIn = false;
     } else {
-        console.log('ログインしています');
+        console.log('ログイン成功');
         res.locals.name = req.session.name;
-        console.log(req.session.name);
+        console.log('ユーザ：' + req.session.name);
+        res.locals.isLoggedIn = true;
     }
     next();
 });
@@ -34,25 +42,33 @@ app.use(express.urlencoded({extended: false}));
 
 app.get('/', (req, res) => {
     connection.query(
-        'SELECT * FROM acount ',
+        'SELECT * FROM post ',
         (error, results) => {
-            console.log(results);
-            console.log(error);
-            res.render('index.ejs',{acounts: results});
+            // console.log(results);
+            // console.log(error);
+            res.render('index.ejs',{posts: results});
         }
     );
 });
 
-app.get('/new', (req, res) => {
-        res.render('new.ejs');
+app.get('/post', (req, res) => {
+    if (res.locals.isLoggedIn === true){
+        res.render('post.ejs');
+    } else {
+        res.render('login.ejs');
     }
-);
+});
 
-app.post('/create',(req, res) => {
+app.post('/createPost',(req, res) => {
+    const date = new Date();
+    const currentTime = date.toFormat('YYYYMMDDHH24MISS');//投稿日時取得
+    console.log(currentTime);
     connection.query(
-        'INSERT INTO acount (name) VALUES (?)',
-        [req.body.itemName],
+        'INSERT INTO post (name, content, datetime) VALUES (?, ?, ?)',
+        [req.session.name, req.body.content, currentTime],
         (error, results) => {
+            // console.log(results);
+            // console.log(error);
             res.redirect('/')
         })
     }
@@ -84,7 +100,7 @@ app.post('/login', (req, res) => {
 
 app.get('/logout', (req, res) => {
     req.session.destroy((error)  => {
-        res.redirect('/list');
+        res.redirect('/');
     });
 });
 

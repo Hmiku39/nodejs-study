@@ -1,0 +1,19 @@
+<%- include('head'); %>
+  <body>
+    <%- include('header'); %>
+    <div class="container">
+        <div class="container-header">
+            <h1>投稿</h1>
+        </div>
+        <div class="item-form-wrapper">
+            <p class="form-label">本文を入力してください</p>
+            <form action="/createPost" method="post">
+                <!-- name属性を追加してください -->
+                <input name="content" type="text">
+                <input type="submit" value="送信">
+            </form>
+        </div>
+      <a href="/" class="cancel-button">もどる</a>
+    </div>
+  </body>
+</html>
