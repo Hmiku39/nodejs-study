@@ -3,15 +3,17 @@
     <%- include('header'); %>
     <div class="sign">
       <div class="container">
-        <h1><a href="/">SNS</a></h1>
         <div class="panel">
-          <h2>ログイン</h2>
-          <form action="/login" method="POST">
+          <h2>新規登録</h2>
+          <form action="/signup" method="post">
+            <!-- ユーザー名とメールアドレス、パスワードの<input>タグにname属性をつけてください。-->
+            <p>ユーザー名</p>
+            <input type="text" name="name">
             <p>メールアドレス</p>
             <input type="text" name="email">
             <p>パスワード</p>
             <input type="password" name="password">
-            <input type="submit" value="ログイン">
+            <input type="submit" value="登録する">
             <a href="/">トップに戻る</a>
           </form>
         </div>

@@ -6,8 +6,6 @@ const app = express();
 //時刻取得
 require('date-utils');
 
-
-
 const connection = mysql.createConnection({
     host: '192.168.100.25',
     user: 'test',
@@ -74,6 +72,25 @@ app.post('/createPost',(req, res) => {
     }
 );
 
+app.get('/signup', (req, res) => {
+    res.render('signup.ejs');
+});
+
+app.post('/signup', (req, res) => {
+    const name = req.body.name;
+    const email = req.body.email;
+    const password = req.body.password;
+    
+    connection.query(
+        'INSERT INTO acount (name, email, password) VALUES (?, ?, ?)',
+        [name, email, password],
+        (error, results) => {
+            res.redirect('/');
+        }
+    );
+});
+
+
 app.get('/login', (req, res) => {
         res.render('login.ejs');
 });
@@ -90,7 +107,7 @@ app.post('/login', (req, res) => {
                     res.redirect('/');
                 } else {
                     res.redirect('/login');
-                }    
+                }
             } else {
             res.redirect('/login');
             }
