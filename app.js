@@ -19,6 +19,8 @@ app.use(
         saveUninitialized: false,
     })
 );
+
+//ログインチェック
 app.use((req, res, next) => {
     if (req.session.userId === undefined) {
         console.log('ゲストアクセス');
@@ -59,11 +61,11 @@ app.get('/post', (req, res) => {
 
 app.post('/createPost',(req, res) => {
     const date = new Date();
-    const currentTime = date.toFormat('YYYYMMDDHH24MISS');//投稿日時取得
-    console.log(currentTime);
+    const postTime = date.toFormat('YYYYMMDDHH24MISS');//投稿日時取得
+    console.log(postTime);
     connection.query(
         'INSERT INTO post (name, content, datetime) VALUES (?, ?, ?)',
-        [req.session.name, req.body.content, currentTime],
+        [req.session.name, req.body.content, postTime],
         (error, results) => {
             // console.log(results);
             // console.log(error);
@@ -73,18 +75,42 @@ app.post('/createPost',(req, res) => {
 );
 
 app.get('/signup', (req, res) => {
-    res.render('signup.ejs');
+    res.render('signup.ejs', {errors: []});
 });
 
-app.post('/signup', (req, res) => {
+app.post('/signup', (req, res, next) => {
     const name = req.body.name;
     const email = req.body.email;
     const password = req.body.password;
-    
+    const errors = [];
+    if(name === ''){
+        errors.push('ユーザー名を入力してください！');
+      }
+      if(email === ''){
+        errors.push('メールアドレスを入力してください！');
+      }
+      if(password === ''){
+        errors.push('パスワードを入力してください！');
+      }
+      if(errors.length > 0){
+        res.render('signup.ejs', {errors: errors});
+      }else{
+        next();
+      }
+},
+    (req, res) => {
+    const name = req.body.name;
+    const email = req.body.email;
+    const password = req.body.password;
+    const date = new Date();
+    const signupDate = date.toFormat('YYYYMMDDHH24MISS');//投稿日時取得
+
     connection.query(
-        'INSERT INTO acount (name, email, password) VALUES (?, ?, ?)',
-        [name, email, password],
+        'INSERT INTO acount (name, email, password, signupDate) VALUES (?, ?, ? ,?)',
+        [name, email, password, signupDate],
         (error, results) => {
+            req.session.userId = results.insertId;
+            req.session.name = name;
             res.redirect('/');
         }
     );
@@ -113,7 +139,7 @@ app.post('/login', (req, res) => {
             }
         }
     );
-  });
+});
 
 app.get('/logout', (req, res) => {
     req.session.destroy((error)  => {

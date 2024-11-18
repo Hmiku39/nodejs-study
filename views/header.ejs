@@ -13,14 +13,18 @@
                     <li class="nav-item">
                         <a class="nav-link text-white" href="#">工事中２</a>
                     </li>
-
+                    <% if (locals.isLoggedIn){ %>
                     <li class="nav-item">
-                        <% if (locals.isLoggedIn){ %>
                         <a class="nav-link text-white" href="/logout">ログアウト</a>
-                        <% } else { %>
-                        <a class="nav-link text-white" href="/login">ログイン</a>
-                        <% } %>
                     </li>
+                    <% } else { %>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/login">ログイン</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/signup">新規登録</a>
+                    </li>
+                    <% } %>
                 </ul>
             </div>
         </div>
