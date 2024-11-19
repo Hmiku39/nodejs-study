@@ -3,15 +3,21 @@ const mysql = require('mysql');
 const session = require('express-session');
 const app = express();
 
+//publicディレクトリのデータを読めるようにするやつ
+app.use(express.static('public'));
+//フォームの値を受け取れるようにしたやつ
+app.use(express.urlencoded({extended: false}));
 //時刻取得
 require('date-utils');
 
+//MYSQL接続情報
 const connection = mysql.createConnection({
     host: '192.168.100.25',
     user: 'test',
     password: 'test',
     database: 'web_app'
 });
+//セッション使用準備
 app.use(
     session({
         secret: 'my_secret_key',
@@ -19,7 +25,6 @@ app.use(
         saveUninitialized: false,
     })
 );
-
 //ログインチェック
 app.use((req, res, next) => {
     if (req.session.userId === undefined) {
@@ -35,11 +40,7 @@ app.use((req, res, next) => {
     next();
 });
 
-//publicディレクトリのデータを読めるようにするやつ
-app.use(express.static('public'));
-//フォームの値を受け取れるようにしたやつ
-app.use(express.urlencoded({extended: false}));
-
+//トップページ
 app.get('/', (req, res) => {
     connection.query(
         'SELECT * FROM post ',
@@ -51,14 +52,16 @@ app.get('/', (req, res) => {
     );
 });
 
+//投稿ページ
 app.get('/post', (req, res) => {
     if (res.locals.isLoggedIn === true){
         res.render('post.ejs');
     } else {
-        res.render('login.ejs');
+        res.render('login.ejs', {formErrors: [], loginError: false});
     }
 });
 
+//投稿処理
 app.post('/createPost',(req, res) => {
     const date = new Date();
     const postTime = date.toFormat('YYYYMMDDHH24MISS');//投稿日時取得
@@ -74,23 +77,29 @@ app.post('/createPost',(req, res) => {
     }
 );
 
+//アカウント新規登録ページ
 app.get('/signup', (req, res) => {
     res.render('signup.ejs', {errors: []});
 });
 
+//アカウント登録処理
 app.post('/signup', (req, res, next) => {
     const name = req.body.name;
     const email = req.body.email;
     const password = req.body.password;
+    const agree = req.body.agree;
     const errors = [];
     if(name === ''){
-        errors.push('ユーザー名を入力してください！');
+        errors[0] = true;
       }
       if(email === ''){
-        errors.push('メールアドレスを入力してください！');
+        errors[1] = true;
       }
       if(password === ''){
-        errors.push('パスワードを入力してください！');
+        errors[2] = true;
+      }
+      if(agree === undefined){
+        errors[3] = true;
       }
       if(errors.length > 0){
         res.render('signup.ejs', {errors: errors});
@@ -116,31 +125,77 @@ app.post('/signup', (req, res, next) => {
     );
 });
 
-
+//ログインページ
 app.get('/login', (req, res) => {
-        res.render('login.ejs');
-});
-app.post('/login', (req, res) => {
-    const email = req.body.email;
-    connection.query(
-        'SELECT * FROM acount WHERE email = ?',
-        [email],
-        (error, results) => {
-            if (results.length > 0) {
-                if (req.body.password === results[0].password){
-                    req.session.userId = results[0].id;
-                    req.session.name = results[0].name;
-                    res.redirect('/');
-                } else {
-                    res.redirect('/login');
-                }
-            } else {
-            res.redirect('/login');
-            }
-        }
-    );
+        res.render('login.ejs', {formErrors: [], loginError: false});
 });
 
+//ログイン処理
+app.post('/login', (req, res, next) => {
+    const email = req.body.email;
+    const password = req.body.password;
+    const formErrors = [];
+    const loginError = false;
+    if(email === ''){
+        formErrors[0] = true;
+    }
+    if(password === ''){
+        formErrors[1] = true;
+    }
+    if(formErrors.length > 0){
+        res.render('login.ejs', {formErrors: formErrors, loginError: loginError});
+    }else{
+        connection.query(
+            'SELECT * FROM acount WHERE email = ?',
+            [email],
+            (error, results) => {
+                console.log(results);
+                console.log(error);
+                console.log(results.length);
+                if (results.length > 0) {
+                    if (req.body.password === results[0].password){
+                        req.session.userId = results[0].id;
+                        req.session.name = results[0].name;
+                        res.redirect('/');
+                    } else {
+                        res.render('login.ejs', {formErrors: formErrors, loginError: true});
+                    }
+                } else {
+                    res.render('login.ejs', {formErrors: formErrors, loginError: true});
+                }
+            }
+        );
+    }
+},
+    // (req, res) => {
+    //     const email = req.body.email;
+    //     const formErrors = [];
+    //     const loginError = false;
+    //     connection.query(
+    //         'SELECT * FROM acount WHERE email = ?',
+    //         [email],
+    //         (error, results) => {
+    //             console.log(results);
+    //             console.log(error);
+    //             if (results.length > 0) {
+    //                 if (req.body.password === results[0].password){
+    //                     req.session.userId = results[0].id;
+    //                     req.session.name = results[0].name;
+    //                     res.redirect('/');
+    //                 } else {
+    //                     loginError = true;
+    //                     res.render('/login', {formErrors: [], loginError});
+    //                 }
+    //             } else {
+    //                 loginError = true;
+    //                 res.render('/login', {formErrors: [], loginError});
+    //             }
+    //         }
+    //     );
+    // }
+);
+
+//ログアウト
 app.get('/logout', (req, res) => {
     req.session.destroy((error)  => {
         res.redirect('/');

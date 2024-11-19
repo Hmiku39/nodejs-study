@@ -1,18 +1,17 @@
 <%- include('head'); %>
-  <body>
+<body>
     <%- include('header'); %>
     <div class="container">
-        <div class="container-header">
-            <h1>投稿</h1>
-        </div>
+        <h1>投稿</h1>
         <div class="item-form-wrapper">
-            <p class="form-label">本文を入力してください</p>
             <form action="/createPost" method="post">
-                <!-- name属性を追加してください -->
-                <input name="content" type="text">
-                <input type="submit" value="送信">
+                <div class="mb-3">
+                    <label name="content" class="form-label">本文</label>
+                    <textarea class="form-control" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">投稿</button>
+                <a href="/" class="btn btn-secondary"">戻る</a>
             </form>
         </div>
-      <a href="/" class="cancel-button">もどる</a>
     </div>
-    <%- include('footer'); %>
+<%- include('footer'); %>
