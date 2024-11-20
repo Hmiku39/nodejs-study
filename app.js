@@ -2,13 +2,13 @@ const express = require('express');
 const mysql = require('mysql');
 const session = require('express-session');
 const app = express();
+//時刻取得
+require('date-utils');
 
 //publicディレクトリのデータを読めるようにするやつ
 app.use(express.static('public'));
 //フォームの値を受け取れるようにしたやつ
 app.use(express.urlencoded({extended: false}));
-//時刻取得
-require('date-utils');
 
 //MYSQL接続情報
 const connection = mysql.createConnection({
@@ -166,34 +166,11 @@ app.post('/login', (req, res, next) => {
             }
         );
     }
-},
-    // (req, res) => {
-    //     const email = req.body.email;
-    //     const formErrors = [];
-    //     const loginError = false;
-    //     connection.query(
-    //         'SELECT * FROM acount WHERE email = ?',
-    //         [email],
-    //         (error, results) => {
-    //             console.log(results);
-    //             console.log(error);
-    //             if (results.length > 0) {
-    //                 if (req.body.password === results[0].password){
-    //                     req.session.userId = results[0].id;
-    //                     req.session.name = results[0].name;
-    //                     res.redirect('/');
-    //                 } else {
-    //                     loginError = true;
-    //                     res.render('/login', {formErrors: [], loginError});
-    //                 }
-    //             } else {
-    //                 loginError = true;
-    //                 res.render('/login', {formErrors: [], loginError});
-    //             }
-    //         }
-    //     );
-    // }
-);
+});
+
+app.get('/test', (req, res) => {
+    res.render('test.ejs');
+});
 
 //ログアウト
 app.get('/logout', (req, res) => {
