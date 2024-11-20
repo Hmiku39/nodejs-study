@@ -1,16 +1,12 @@
 <%- include('head'); %>
 <body>
     <%- include('header'); %>
-    <div class="container-header">
+    <div class="container">
         <h1>掲示板</h1>
         <p>ようこそ、<%= locals.name %>さん</p>
         <a href="/post" class="new-button">投稿する</a>
-    </div>
-    <div class="index-table-wrapper">
-        <div class="table-head">
-            <span class="id-column">ID</span>
-            <span>買うもの</span>
-        </div>
+        <span class="id-column">ID</span>
+        <span>買うもの</span>
         <% posts.forEach((post) => { %>
         <div class="card mb-3">
             <div class="card-header fs-5">
