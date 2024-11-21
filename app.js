@@ -42,12 +42,14 @@ app.use((req, res, next) => {
 
 //トップページ
 app.get('/', (req, res) => {
+    const today = new Date();
+    // console.log(todayTime);
     connection.query(
         'SELECT * FROM post ',
         (error, results) => {
             // console.log(results);
             // console.log(error);
-            res.render('index.ejs',{posts: results});
+            res.render('index.ejs',{posts: results, today: today});
         }
     );
 });
@@ -71,7 +73,7 @@ app.post('/createPost',(req, res) => {
         [req.session.name, req.body.content, postTime],
         (error, results) => {
             // console.log(results);
-            // console.log(error);
+            console.log(error);
             res.redirect('/')
         })
     }
