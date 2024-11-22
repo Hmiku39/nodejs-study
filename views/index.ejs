@@ -33,14 +33,21 @@
                 <div class="row">
                     <div class="col">
                         <% var postdate = new Date(post.datetime);
-                        var aaa = new Date(today);
-                        bbb = aaa.getTime() - postdate.getTime();
-                        ccc = aaa - postdate;
+                        const datetimeNow = new Date(today);
+                        diff = datetimeNow - postdate;
                         %>
-                        <%= bbb %>
-                        <%= ccc %>
-
-                        <%= post.datetime.toFormat('YYYY年MM月DD日HH24：MI') %>
+                        <% if( diff < 60000){
+                            const sec = Math.floor(diff/1000)%60; %>
+                            <p>たった今</p>
+                        <% } else if (diff < 3600000){
+                            const min=Math.floor(diff/1000/60)%60; %>
+                            <p><%= min %>分前</p>
+                        <% } else if (diff < 86400000){ %>
+                            <% const hours=Math.floor(diff/1000/60/60)%24; %>
+                            <p><%= hours %>時間前</p>
+                        <% } else { %>
+                            <%= post.datetime.toFormat('YYYY年MM月DD日') %>
+                        <% } %>
                     </div>
                     <div class="col">
                         <a href="#">
