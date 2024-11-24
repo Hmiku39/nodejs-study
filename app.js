@@ -40,22 +40,28 @@ app.use((req, res, next) => {
 
 //トップページ
 app.get('/', (req, res) => {
-    const today = new Date();
-    // console.log(todayTime);
-    connection.query(
-        'SELECT * FROM post INNER JOIN acount ON post.acountNum = acount.acountNum AND deleteFlg = "0" ORDER BY datetime DESC',
-        (error, results) => {
-            console.log(results);
-            console.log(error);
-            res.render('index.ejs',{posts: results, today: today});
-        }
-    );
+
+    if( res.locals.isLoggedIn === true ){
+        const today = new Date();//現在の時刻と投稿時間との比較のため
+        // console.log(todayTime);
+        connection.query(
+            'SELECT * FROM post INNER JOIN acount ON post.acountNum = acount.acountNum AND deleteFlg = "0" INNER JOIN good ON post.acountNum = good.acountNum AND post.postNum = good.postNum ORDER BY datetime DESC',
+            (error, results) => {
+                console.log(results);
+                console.log(error);
+                res.render('index.ejs',{posts: results, today: today});
+            }
+        );
+    } else {
+        // res.render('login.ejs', {formErrors: [], loginError: false});
+        res.redirect('/login');
+    }
 });
 
 //投稿ページ
 app.get('/post', (req, res) => {
     if (req.session.acountNum === undefined){
-        res.render('login.ejs', {formErrors: [], loginError: false});
+        res.redirect('/login');
     } else {
         res.render('post.ejs');
     }
@@ -174,13 +180,23 @@ app.post('/login', (req, res) => {
 //GOOD機能
 app.get('/good/:postNum', (req, res) => {
     const postNum = req.params.postNum;
+    const date = new Date();
+    const goodDate = date.toFormat('YYYYMMDDHH24MISS');//GOOD日時取得
     connection.query(
         'UPDATE post SET good = good + 1 WHERE post.postNum = ?;',
         [postNum],
         (error, results) => {
             console.log(results);
             console.log(error);
-            res.redirect('/');
+            connection.query(
+                'INSERT INTO good (acountNum, postNum, goodDate) VALUES (?, ?, ?)',
+                [req.session.acountNum, postNum ,goodDate],
+                (error, results) => {
+                    console.log(results);
+                    console.log(error);
+                    res.redirect('/');
+                }
+            );
         }
     );
 });
