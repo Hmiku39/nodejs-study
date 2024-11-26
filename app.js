@@ -2,6 +2,8 @@ const express = require('express');
 const mysql = require('mysql');
 const session = require('express-session');
 const app = express();
+const { recentPost } = require('./recentpost');//投稿日時と現在の時刻の差分計算
+
 //時刻取得
 require('date-utils');
 
@@ -64,7 +66,45 @@ app.get('/', (req, res) => {
             (error, results) => {
                 console.log(results);
                 console.log(error);
-                res.render('index.ejs',{posts: results, today: today});
+                res.render('index.ejs',{posts: results, recentPost});
+            }
+        );
+    } else {
+        // res.render('login.ejs', {formErrors: [], loginError: false});
+        res.redirect('/login');
+    }
+});
+
+//プロフィールページ
+app.get('/profile/:userId', (req, res) => {
+    if (req.params.userId === undefined) {
+        const userId = req.session.acountNum;
+    } else {
+        const userId = req.params.userId;
+    }
+    if (res.locals.isLoggedIn === true){
+        const today = new Date();//現在の時刻と投稿時間との比較のため
+        // console.log(todayTime);
+        connection.query(
+            `SELECT post.postNum AS post_postNum,
+            post.acountNum AS post_acountNum,
+            post.content AS post_content,
+            post.datetime AS post_datetime,
+            post.good AS post_good,      
+            acount.acountNum AS acount_acountNum,
+            acount.userId AS acount_userId,
+            acount.displayName AS acount_displayName,
+            good.postNum AS good_postNum,
+            good.acountNum AS good_acountNum
+            FROM post 
+            INNER JOIN acount ON acount.userId = ? AND post.acountNum = acount.acountNum AND deleteFlg = "0"
+            LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
+            ORDER BY datetime DESC`,
+            [userId, req.session.acountNum],
+            (error, results) => {
+                console.log(results);
+                console.log(error);
+                res.render('profile.ejs',{posts: results, recentPost});
             }
         );
     } else {
