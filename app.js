@@ -76,37 +76,58 @@ app.get('/', (req, res) => {
 });
 
 //プロフィールページ
-app.get('/profile/:userId', (req, res) => {
-    if (req.params.userId === undefined) {
-        const userId = req.session.acountNum;
-    } else {
-        const userId = req.params.userId;
-    }
+app.get('/profile', (req, res) => {
+    const userId = req.query.userid;
     if (res.locals.isLoggedIn === true){
         const today = new Date();//現在の時刻と投稿時間との比較のため
         // console.log(todayTime);
-        connection.query(
-            `SELECT post.postNum AS post_postNum,
-            post.acountNum AS post_acountNum,
-            post.content AS post_content,
-            post.datetime AS post_datetime,
-            post.good AS post_good,      
-            acount.acountNum AS acount_acountNum,
-            acount.userId AS acount_userId,
-            acount.displayName AS acount_displayName,
-            good.postNum AS good_postNum,
-            good.acountNum AS good_acountNum
-            FROM post 
-            INNER JOIN acount ON acount.userId = ? AND post.acountNum = acount.acountNum AND deleteFlg = "0"
-            LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
-            ORDER BY datetime DESC`,
-            [userId, req.session.acountNum],
-            (error, results) => {
-                console.log(results);
-                console.log(error);
-                res.render('profile.ejs',{posts: results, recentPost});
-            }
-        );
+        if (userId === undefined) {
+            connection.query(
+                `SELECT post.postNum AS post_postNum,
+                post.acountNum AS post_acountNum,
+                post.content AS post_content,
+                post.datetime AS post_datetime,
+                post.good AS post_good,      
+                acount.acountNum AS acount_acountNum,
+                acount.userId AS acount_userId,
+                acount.displayName AS acount_displayName,
+                good.postNum AS good_postNum,
+                good.acountNum AS good_acountNum
+                FROM post 
+                INNER JOIN acount ON acount.acountNum = ? AND post.acountNum = acount.acountNum AND deleteFlg = "0"
+                LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
+                ORDER BY datetime DESC`,
+                [req.session.acountNum, req.session.acountNum],
+                (error, results) => {
+                    console.log(results);
+                    console.log(error);
+                    res.render('profile.ejs',{posts: results, recentPost});
+                }
+            );
+        } else {
+            connection.query(
+                `SELECT post.postNum AS post_postNum,
+                post.acountNum AS post_acountNum,
+                post.content AS post_content,
+                post.datetime AS post_datetime,
+                post.good AS post_good,      
+                acount.acountNum AS acount_acountNum,
+                acount.userId AS acount_userId,
+                acount.displayName AS acount_displayName,
+                good.postNum AS good_postNum,
+                good.acountNum AS good_acountNum
+                FROM post 
+                INNER JOIN acount ON acount.userId = ? AND post.acountNum = acount.acountNum AND deleteFlg = "0"
+                LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
+                ORDER BY datetime DESC`,
+                [userId, req.session.acountNum],
+                (error, results) => {
+                    console.log(results);
+                    console.log(error);
+                    res.render('profile.ejs',{posts: results, recentPost});
+                }
+            );
+        }
     } else {
         // res.render('login.ejs', {formErrors: [], loginError: false});
         res.redirect('/login');
