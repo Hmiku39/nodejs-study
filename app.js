@@ -46,11 +46,20 @@ app.get('/', (req, res) => {
         const today = new Date();//現在の時刻と投稿時間との比較のため
         // console.log(todayTime);
         connection.query(
-            `SELECT * FROM post 
-            INNER JOIN acount ON post.acountNum = acount.acountNum AND deleteFlg = "0" 
-            LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum ORDER BY datetime DESC`,
-            // `SELECT * FROM post 
-            // INNER JOIN acount ON post.acountNum = acount.acountNum AND deleteFlg = "0" ORDER BY datetime DESC`,
+            `SELECT post.postNum AS post_postNum,
+            post.acountNum AS post_acountNum,
+            post.content AS post_content,
+            post.datetime AS post_datetime,
+            post.good AS post_good,      
+            acount.acountNum AS acount_acountNum,
+            acount.userId AS acount_userId,
+            acount.displayName AS acount_displayName,
+            good.postNum AS good_postNum,
+            good.acountNum AS good_acountNum
+            FROM post 
+            INNER JOIN acount ON post.acountNum = acount.acountNum AND deleteFlg = "0"
+            LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
+            ORDER BY datetime DESC`,
             [req.session.acountNum],
             (error, results) => {
                 console.log(results);
@@ -197,6 +206,30 @@ app.get('/good/:postNum', (req, res) => {
             connection.query(
                 'INSERT INTO good (acountNum, postNum, goodDate) VALUES (?, ?, ?)',
                 [req.session.acountNum, postNum ,goodDate],
+                (error, results) => {
+                    console.log(results);
+                    console.log(error);
+                    res.redirect('/');
+                }
+            );
+        }
+    );
+});
+
+//GOODキャンセル
+app.get('/goodcancel/:postNum', (req, res) => {
+    const postNum = req.params.postNum;
+    const date = new Date();
+    const goodDate = date.toFormat('YYYYMMDDHH24MISS');//GOOD日時取得
+    connection.query(
+        'UPDATE post SET good = good - 1 WHERE post.postNum = ?;',
+        [postNum],
+        (error, results) => {
+            console.log(results);
+            console.log(error);
+            connection.query(
+                'DELETE FROM good WHERE acountNum = ? AND postNum = ?',
+                [req.session.acountNum, postNum],
                 (error, results) => {
                     console.log(results);
                     console.log(error);
