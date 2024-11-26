@@ -42,15 +42,16 @@ app.use((req, res, next) => {
 //トップページ
 app.get('/', (req, res) => {
 
-    if( res.locals.isLoggedIn === true ){
+    if (res.locals.isLoggedIn === true){
         const today = new Date();//現在の時刻と投稿時間との比較のため
         // console.log(todayTime);
         connection.query(
-            // `SELECT * FROM post 
-            // INNER JOIN acount ON post.acountNum = acount.acountNum AND deleteFlg = "0" 
-            // LEFT OUTER JOIN good ON post.postNum = good.postNum ORDER BY datetime DESC`,
             `SELECT * FROM post 
-            INNER JOIN acount ON post.acountNum = acount.acountNum AND deleteFlg = "0"　ORDER BY datetime DESC`,
+            INNER JOIN acount ON post.acountNum = acount.acountNum AND deleteFlg = "0" 
+            LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum ORDER BY datetime DESC`,
+            // `SELECT * FROM post 
+            // INNER JOIN acount ON post.acountNum = acount.acountNum AND deleteFlg = "0" ORDER BY datetime DESC`,
+            [req.session.acountNum],
             (error, results) => {
                 console.log(results);
                 console.log(error);
