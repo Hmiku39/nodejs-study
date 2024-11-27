@@ -152,6 +152,48 @@ app.get('/profile', (req, res) => {
     }
 });
 
+//フォロー機能
+app.get('/follow', (req, res) => {
+    const followId = req.query.followid;
+    const date = new Date();
+    const followDate = date.toFormat('YYYYMMDDHH24MISS');//GOOD日時取得
+    connection.query(
+        `UPDATE acount SET follow = follow + 1 WHERE acount.acountNum = ?;`,
+        [req.session.acountNum],
+        (error_follow, results_follow) => {
+            console.log(results_follow);
+            console.log(error_follow);
+            
+            connection.query(
+                `UPDATE acount SET followers = followers + 1 WHERE acount.acountNum = ?;`,
+                [followId],
+                (error_followers, results_followers) => {
+                    console.log(results_followers);
+                    console.log(error_followers);
+                
+                    connection.query(
+                        `INSERT INTO follow (acountNum, followAcountNum, followDate) VALUES (?, ?, ?)`,
+                        [req.session.acountNum, followId ,followDate],
+                        (error_followR, results_followR) => {
+                            console.log(results_followR);
+                            console.log(error_followR);
+                            connection.query(
+                                `SELECT userId FROM acount WHERE acountNum = ?`,
+                                [followId],
+                                (error, result) => {
+                                    console.log(result);
+                                    console.log(error);
+                                    res.redirect('/profile?userid='+result[0].userId);
+                                }
+                            );
+                        }
+                    );
+                }
+            );
+        }
+    );
+});
+
 //投稿ページ
 app.get('/post', (req, res) => {
     if (req.session.acountNum === undefined){
@@ -167,7 +209,7 @@ app.post('/createPost',(req, res) => {
     const postTime = date.toFormat('YYYYMMDDHH24MISS');//投稿日時取得
     console.log(postTime);
     connection.query(
-        'INSERT INTO post (acountNum, content, datetime) VALUES (?, ?, ?)',
+        `INSERT INTO post (acountNum, content, datetime) VALUES (?, ?, ?)`,
         [req.session.acountNum, req.body.content, postTime],
         (error, results) => {
             console.log(error);
@@ -219,7 +261,7 @@ app.post('/signup', (req, res, next) => {
         const signupDate = date.toFormat('YYYYMMDDHH24MISS');//投稿日時取得
 
         connection.query(
-            'INSERT INTO acount (userId, displayName, email, password, signupDate) VALUES (?, ?, ? ,?, ?)',
+            `INSERT INTO acount (userId, displayName, email, password, signupDate) VALUES (?, ?, ? ,?, ?)`,
             [userid, displayName, email, password, signupDate],
             (error, results) => {
                 req.session.acountNum = results.insertId;
@@ -250,7 +292,7 @@ app.post('/login', (req, res) => {
         res.render('login.ejs', {formErrors: formErrors, loginError: loginError});
     }else{
         connection.query(
-            'SELECT * FROM acount WHERE email = ?',
+            `SELECT * FROM acount WHERE email = ?`,
             [email],
             (error, results) => {
                 console.log(results);
@@ -277,13 +319,13 @@ app.get('/good/:postNum', (req, res) => {
     const date = new Date();
     const goodDate = date.toFormat('YYYYMMDDHH24MISS');//GOOD日時取得
     connection.query(
-        'UPDATE post SET good = good + 1 WHERE post.postNum = ?;',
+        `UPDATE post SET good = good + 1 WHERE post.postNum = ?;`,
         [postNum],
         (error, results) => {
             console.log(results);
             console.log(error);
             connection.query(
-                'INSERT INTO good (acountNum, postNum, goodDate) VALUES (?, ?, ?)',
+                `INSERT INTO good (acountNum, postNum, goodDate) VALUES (?, ?, ?)`,
                 [req.session.acountNum, postNum ,goodDate],
                 (error, results) => {
                     console.log(results);
@@ -301,13 +343,13 @@ app.get('/goodcancel/:postNum', (req, res) => {
     const date = new Date();
     const goodDate = date.toFormat('YYYYMMDDHH24MISS');//GOOD日時取得
     connection.query(
-        'UPDATE post SET good = good - 1 WHERE post.postNum = ?;',
+        `UPDATE post SET good = good - 1 WHERE post.postNum = ?;`,
         [postNum],
         (error, results) => {
             console.log(results);
             console.log(error);
             connection.query(
-                'DELETE FROM good WHERE acountNum = ? AND postNum = ?',
+                `DELETE FROM good WHERE acountNum = ? AND postNum = ?`,
                 [req.session.acountNum, postNum],
                 (error, results) => {
                     console.log(results);
