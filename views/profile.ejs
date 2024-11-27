@@ -2,7 +2,7 @@
 <body>
     <%- include('header'); %>
     <div class="container">
-        <h1>Twinklly（仮）</h1>
+        <h1>プロフィール</h1>
 
         <div class="row">
             <div class="col-sm mb-3 mb-sm-0 text-center">
@@ -11,12 +11,33 @@
                     <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"/>
                 </svg>
             </div>
-            <div class="col-sm-8">
-                <div class="card">
+            <div class="col-sm-10">
+                <div class="card mb-3">
                     <div class="card-body">
-                        <h5 class="card-title"><%= prof[0].displayName %></h5>
-                        <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
-                        <a href="#" class="btn btn-primary">Go somewhere</a>
+                        <h5 class="card-title">
+                            <div class="row">
+                                <div class="col">
+                                    <%= prof[0].displayName %>
+                                </div>
+                                <div class="col text-end">
+                                    <a href="#" class="btn btn-primary">フォローする</a>
+                                </div>
+                            </div>
+                        </h5>
+                        <p class="text-body">
+                            @<%= prof[0].userId %>
+                        </p>
+                        <p class="card-text">
+                            <%= prof[0].introduction %>
+                        </p>
+                        <div class="row text-center">
+                            <div class="col">
+                                <a href="#" class="btn btn-secondary d-block ">フォロー</a>
+                            </div>
+                            <div class="col">
+                                <a href="#" class="btn btn-secondary d-block ">フォロワー</a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
