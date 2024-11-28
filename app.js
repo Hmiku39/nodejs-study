@@ -11,6 +11,7 @@ require('date-utils');
 app.use(express.static('public'));
 //フォームの値を受け取れるようにしたやつ
 app.use(express.urlencoded({extended: false}));
+app.use(express.json());
 
 //MYSQL接続情報
 const connection = mysql.createConnection({
@@ -337,8 +338,9 @@ app.post('/login', (req, res) => {
 });
 
 //GOOD機能
-app.get('/good/:postNum', authenticateUser, (req, res) => {
-    const postNum = req.params.postNum;
+app.post('/good', authenticateUser, (req, res) => {
+    const postNum = req.body.postNum;
+    console.log('あｓｄｈふぁいｓづｆはｋｊはｋｊｇはｓｊｈｆそｊｈふぁおｓ'+postNum);
     const date = new Date();
     const goodDate = date.toFormat('YYYYMMDDHH24MISS');//GOOD日時取得
     connection.query(
@@ -353,7 +355,18 @@ app.get('/good/:postNum', authenticateUser, (req, res) => {
                 (error, results) => {
                     console.log(results);
                     console.log(error);
-                    res.redirect('/');
+                    connection.query(
+                        'SELECT good FROM post WHERE postNum = ?',
+                        [postNum],
+                        (error, results) => {
+                            if (error || results.length === 0) {
+                                return res.status(500).json({ error: 'Failed to retrieve Goods.' });
+                            }
+                          const newGoods = results[0].good;
+                          console.log('~~~~~~~~~~~~~'+results[0].good+'~~~~~~~~~~~~~~')
+                          res.json({ Goods: newGoods }); // 新しいいいね数をクライアントに返す
+                        }
+                    );
                 }
             );
         }
