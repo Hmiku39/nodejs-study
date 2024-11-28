@@ -142,13 +142,14 @@ app.get('/profile', (req, res) => {
                             // console.log(results);
                             console.log(error);
 
+                            //対象のアカウントをフォロー中かチェック
                             connection.query(
                                 `SELECT * FROM follow WHERE acountNum = ? AND followAcountNum = ?`,
                                 [req.session.acountNum, profResult[0].acountNum],
                                 (follow_error, followResult) => {
                                     console.log(followResult);
                                     console.log(follow_error);
-                                    if (followResult.length > 0) {
+                                    if (followResult.length > 0) {//一致するデータがなければまだフォローしていない
                                         res.render('profile.ejs',{posts: results, prof: profResult, recentPost, followStatus: true});
                                     } else {
                                         res.render('profile.ejs',{posts: results, prof: profResult, recentPost, followStatus: false});

@@ -23,7 +23,14 @@
                                     <% if (followStatus === false) { %>
                                     <a href="/follow?followid=<%= prof[0].acountNum %>" class="btn btn-primary">フォローする</a>
                                     <% } else if(followStatus === true) { %>
-                                    <a href="/follow?followid=<%= prof[0].acountNum %>" class="btn btn-primary">フォロー中</a>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                            フォロー中
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="/unfollow">フォローを解除する</a></li>
+                                        </ul>
+                                    </div>
                                     <% } else { %>
                                     <% } %>
                                 </div>
