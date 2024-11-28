@@ -117,30 +117,43 @@ app.get('/profile', (req, res) => {
             connection.query(
                 `SELECT * FROM acount WHERE userId = ?`,
                 [userId],
-                (error, profResult) => {
+                (prof_error, profResult) => {
                     console.log(profResult);
-                    console.log(error);
-              
+                    console.log(prof_error);
                     connection.query(
-                        `SELECT post.postNum AS post_postNum,
-                        post.acountNum AS post_acountNum,
-                        post.content AS post_content,
-                        post.datetime AS post_datetime,
-                        post.good AS post_good,      
-                        acount.acountNum AS acount_acountNum,
-                        acount.userId AS acount_userId,
-                        acount.displayName AS acount_displayName,
-                        good.postNum AS good_postNum,
-                        good.acountNum AS good_acountNum
-                        FROM post 
-                        INNER JOIN acount ON acount.userId = ? AND post.acountNum = acount.acountNum AND deleteFlg = "0"
-                        LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
-                        ORDER BY datetime DESC`,
-                        [userId, req.session.acountNum],
-                        (error, results) => {
-                            // console.log(results);
-                            console.log(error);
-                            res.render('profile.ejs',{posts: results, prof: profResult, recentPost});
+                        `SELECT * FROM follow WHERE acountNum = ?`,
+                        [profResult[0].acountNum],
+                        (error, followResult) => {
+                            console.log(followResult);
+                            console.log(follow_error);
+                            if (followResult.length > 0) {
+
+                            } else {
+                                
+                            }
+              
+                            connection.query(
+                                `SELECT post.postNum AS post_postNum,
+                                post.acountNum AS post_acountNum,
+                                post.content AS post_content,
+                                post.datetime AS post_datetime,
+                                post.good AS post_good,      
+                                acount.acountNum AS acount_acountNum,
+                                acount.userId AS acount_userId,
+                                acount.displayName AS acount_displayName,
+                                good.postNum AS good_postNum,
+                                good.acountNum AS good_acountNum
+                                FROM post 
+                                INNER JOIN acount ON acount.userId = ? AND post.acountNum = acount.acountNum AND deleteFlg = "0"
+                                LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
+                                ORDER BY datetime DESC`,
+                                [userId, req.session.acountNum],
+                                (error, results) => {
+                                    // console.log(results);
+                                    console.log(error);
+                                    res.render('profile.ejs',{posts: results, prof: profResult, recentPost});
+                                }
+                            );
                         }
                     );
                 }
