@@ -41,6 +41,14 @@ app.use((req, res, next) => {
     next();
 });
 
+
+const authenticateUser = (req, res, next) => {//ログインしていないユーザによる不正URLクエリ防止
+    if (!req.session.acountNum) {
+        return res.status(401).send('401 - Unauthorized');
+    }
+    next();
+};
+
 //トップページ
 app.get('/', (req, res) => {
 
@@ -168,7 +176,7 @@ app.get('/profile', (req, res) => {
 });
 
 //フォロー機能
-app.get('/follow', (req, res) => {
+app.get('/follow', authenticateUser, (req, res) => {
     const followId = req.query.followid;
     const date = new Date();
     const followDate = date.toFormat('YYYYMMDDHH24MISS');//GOOD日時取得
@@ -329,7 +337,7 @@ app.post('/login', (req, res) => {
 });
 
 //GOOD機能
-app.get('/good/:postNum', (req, res) => {
+app.get('/good/:postNum', authenticateUser, (req, res) => {
     const postNum = req.params.postNum;
     const date = new Date();
     const goodDate = date.toFormat('YYYYMMDDHH24MISS');//GOOD日時取得
@@ -353,7 +361,7 @@ app.get('/good/:postNum', (req, res) => {
 });
 
 //GOODキャンセル
-app.get('/goodcancel/:postNum', (req, res) => {
+app.get('/goodcancel/:postNum', authenticateUser, (req, res) => {
     const postNum = req.params.postNum;
     const date = new Date();
     const goodDate = date.toFormat('YYYYMMDDHH24MISS');//GOOD日時取得
