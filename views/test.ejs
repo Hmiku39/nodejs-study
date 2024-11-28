@@ -1,8 +1,30 @@
 <%- include('head'); %>
 <body>
     <%- include('header'); %>
-    <% var currentDate = new Date()
-    var year = currentDate.getFullYear()
-    console.log(year)  /* 今が2019年なら【2019】が出力される*/
-    %>
+    <button id="likeButton" data-post-id="12345">いいね</button>
+
+<script>
+  document.getElementById('likeButton').addEventListener('click', async () => {
+    const postId = document.getElementById('likeButton').dataset.postId;
+
+    try {
+      const response = await fetch('/like', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ postId }),
+      });
+
+      if (response.ok) {
+        alert('Liked successfully!');
+      } else {
+        alert('Failed to like the post.');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred.');
+    }
+  });
+</script>
 <%- include('footer'); %>

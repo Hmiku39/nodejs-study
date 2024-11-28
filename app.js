@@ -387,6 +387,11 @@ app.get('/goodcancel/:postNum', authenticateUser, (req, res) => {
 app.get('/test', (req, res) => {
     res.render('test.ejs');
 });
+app.post('/like', (req, res) => {
+    const { postId } = req.body;
+    console.log(postId);
+  
+});
 
 //ログアウト
 app.get('/logout', (req, res) => {
