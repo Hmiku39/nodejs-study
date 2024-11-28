@@ -20,7 +20,12 @@
                                     <%= prof[0].displayName %>
                                 </div>
                                 <div class="col text-end">
+                                    <% if (followStatus === false) { %>
                                     <a href="/follow?followid=<%= prof[0].acountNum %>" class="btn btn-primary">フォローする</a>
+                                    <% } else if(followStatus === true) { %>
+                                    <a href="/follow?followid=<%= prof[0].acountNum %>" class="btn btn-primary">フォロー中</a>
+                                    <% } else { %>
+                                    <% } %>
                                 </div>
                             </div>
                         </h5>

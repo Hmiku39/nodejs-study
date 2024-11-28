@@ -81,7 +81,7 @@ app.get('/profile', (req, res) => {
     if (res.locals.isLoggedIn === true){
         const today = new Date();//現在の時刻と投稿時間との比較のため
         // console.log(todayTime);
-        if (userId === undefined) {
+        if (userId === undefined) {//ユーザーIDの指定がない場合自分のプロフィールページを表示
             connection.query(
                 `SELECT * FROM acount WHERE acountNum = ?`,
                 [req.session.acountNum],
@@ -97,61 +97,62 @@ app.get('/profile', (req, res) => {
                         post.good AS post_good,      
                         acount.acountNum AS acount_acountNum,
                         acount.userId AS acount_userId,
-                        acount.displayName AS acount_displayName,
-                        good.postNum AS good_postNum,
-                        good.acountNum AS good_acountNum
+                        acount.displayName AS acount_displayName
                         FROM post 
                         INNER JOIN acount ON acount.acountNum = ? AND post.acountNum = acount.acountNum AND deleteFlg = "0"
-                        LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
                         ORDER BY datetime DESC`,
-                        [req.session.acountNum, req.session.acountNum],
+                        [req.session.acountNum],
                         (error, results) => {
                             // console.log(results);
                             console.log(error);
-                            res.render('profile.ejs',{posts: results, prof: profResult, recentPost});
+                            console.log('はははははははは');
+                            console.log(results);
+                            res.render('profile.ejs',{posts: results, prof: profResult, recentPost, followStatus: 'myprofile'});
                         }
                     );
                 }
             );
-        } else {
+        } else {//URLのユーザーIDのプロフィールページ表示
             connection.query(
                 `SELECT * FROM acount WHERE userId = ?`,
                 [userId],
                 (prof_error, profResult) => {
                     console.log(profResult);
                     console.log(prof_error);
-                    connection.query(
-                        `SELECT * FROM follow WHERE acountNum = ?`,
-                        [profResult[0].acountNum],
-                        (error, followResult) => {
-                            console.log(followResult);
-                            console.log(follow_error);
-                            if (followResult.length > 0) {
-
-                            } else {
-                                
-                            }
+                    if (profResult[0].acountNum === req.session.acountNum){//自分のユーザーIDならQUERY無しURLにリダイレクト
+                        res.redirect('/profile');
+                    }
               
+                    connection.query(
+                        `SELECT post.postNum AS post_postNum,
+                        post.acountNum AS post_acountNum,
+                        post.content AS post_content,
+                        post.datetime AS post_datetime,
+                        post.good AS post_good,      
+                        acount.acountNum AS acount_acountNum,
+                        acount.userId AS acount_userId,
+                        acount.displayName AS acount_displayName,
+                        follow.acountNum AS follow_acountNum
+                        FROM post 
+                        INNER JOIN acount ON acount.userId = ? AND post.acountNum = acount.acountNum AND deleteFlg = "0"
+                        LEFT OUTER JOIN follow ON follow.acountNum = ? AND follow.followAcountNum = ?
+                        ORDER BY datetime DESC`,
+                        [userId, req.session.acountNum, userId],
+                        (error, results) => {
+                            // console.log(results);
+                            console.log(error);
+
                             connection.query(
-                                `SELECT post.postNum AS post_postNum,
-                                post.acountNum AS post_acountNum,
-                                post.content AS post_content,
-                                post.datetime AS post_datetime,
-                                post.good AS post_good,      
-                                acount.acountNum AS acount_acountNum,
-                                acount.userId AS acount_userId,
-                                acount.displayName AS acount_displayName,
-                                good.postNum AS good_postNum,
-                                good.acountNum AS good_acountNum
-                                FROM post 
-                                INNER JOIN acount ON acount.userId = ? AND post.acountNum = acount.acountNum AND deleteFlg = "0"
-                                LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
-                                ORDER BY datetime DESC`,
-                                [userId, req.session.acountNum],
-                                (error, results) => {
-                                    // console.log(results);
-                                    console.log(error);
-                                    res.render('profile.ejs',{posts: results, prof: profResult, recentPost});
+                                `SELECT * FROM follow WHERE acountNum = ? AND followAcountNum = ?`,
+                                [req.session.acountNum, profResult[0].acountNum],
+                                (follow_error, followResult) => {
+                                    console.log(followResult);
+                                    console.log(follow_error);
+                                    if (followResult.length > 0) {
+                                        res.render('profile.ejs',{posts: results, prof: profResult, recentPost, followStatus: true});
+                                    } else {
+                                        res.render('profile.ejs',{posts: results, prof: profResult, recentPost, followStatus: false});
+                                    }
                                 }
                             );
                         }
