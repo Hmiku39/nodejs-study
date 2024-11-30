@@ -7,7 +7,7 @@
             <div class="row mb-3">
                 <label class="col-sm-2 col-form-label">メールアドレス</label>
                 <div class="col-sm-10">
-                    <input type="text" name="email" class="form-control" aria-describedby="emailHelp">
+                    <input type="text" name="email" class="form-control" aria-describedby="emailHelp" placeholder="メールアドレス">
                     <% if (formErrors[0] === true) { %>
                     <div class="form-text text-danger">※メールアドレスが未入力です。</div>
                     <% } if (loginError === true) { %>
@@ -18,7 +18,7 @@
             <div class="row mb-3">
                 <label class="col-sm-2 col-form-label">パスワード</label>
                 <div class="col-sm-10">
-                    <input type="password" name="password" class="form-control">
+                    <input type="password" name="password" class="form-control" placeholder="パスワード">
                     <% if (formErrors[1] === true) { %>
                     <div class="form-text text-danger">※パスワードが未入力です。</div>
                     <% } %>
