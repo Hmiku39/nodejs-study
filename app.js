@@ -217,6 +217,46 @@ app.get('/follow', authenticateUser, (req, res) => {
     );
 });
 
+//フォロー解除機能
+app.get('/unfollow', authenticateUser, (req, res) => {
+    const followId = req.query.followid;
+    connection.query(
+        `UPDATE acount SET follow = follow - 1 WHERE acount.acountNum = ?;`,
+        [req.session.acountNum],
+        (error_follow, results_follow) => {
+            console.log(results_follow);
+            console.log(error_follow);
+            
+            connection.query(
+                `UPDATE acount SET followers = followers - 1 WHERE acount.acountNum = ?;`,
+                [followId],
+                (error_followers, results_followers) => {
+                    console.log(results_followers);
+                    console.log(error_followers);
+                
+                    connection.query(
+                        `DELETE FROM follow WHERE acountNum = ? AND followAcountNum = ?`,
+                        [req.session.acountNum, followId],
+                        (error_followR, results_followR) => {
+                            console.log(results_followR);
+                            console.log(error_followR);
+                            connection.query(
+                                `SELECT userId FROM acount WHERE acountNum = ?`,
+                                [followId],
+                                (error, result) => {
+                                    console.log(result);
+                                    console.log(error);
+                                    res.redirect('/profile?userid='+result[0].userId);
+                                }
+                            );
+                        }
+                    );
+                }
+            );
+        }
+    );
+});
+
 //投稿ページ
 app.get('/post', (req, res) => {
     if (req.session.acountNum === undefined){
