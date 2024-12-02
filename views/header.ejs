@@ -7,13 +7,16 @@
             </button>
             <div class="collapse navbar-collapse text-white" id="navbarSupportedContent" data-bs-theme="dark">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <% if (locals.isLoggedIn){ %>
                     <li class="nav-item">
                         <a class="nav-link active text-white" aria-current="page" href="post">投稿する</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-white" href="#">工事中２</a>
+                        <a class="nav-link text-white" href="/profile">プロフィール</a>
                     </li>
-                    <% if (locals.isLoggedIn){ %>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="#">検索</a>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link text-white" href="/logout">ログアウト</a>
                     </li>
