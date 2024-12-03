@@ -121,7 +121,13 @@
                             </button>
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" href="#">共有する</a></li>
-                                <li><a class="dropdown-item" href="#">削除</a></li>
+                                <li>
+                                    <form action="/deletepost" method="POST">
+                                        <input type="hidden" name="postNum" value="<%= post.post_postNum %>">
+                                        <input type="hidden" name="redirect" value="profile">
+                                        <button type="submit" class="dropdown-item">削除</button>
+                                    </form>
+                                </li>
                             </ul>
                         </div>
                     </div>
