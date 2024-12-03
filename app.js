@@ -284,6 +284,26 @@ app.post('/createPost',(req, res) => {
     }
 );
 
+//投稿内容の削除
+app.post('/deletepost', authenticateUser, (req, res) => {
+    const postNum = req.body.postNum;
+    const redirect = req.body.redirect;
+    connection.query(
+        `UPDATE post SET deleteFlg = 1 WHERE postNum = ?;`,
+        [postNum],
+        (error, results) => {
+            console.log(results);
+            console.log(error);
+
+            if (redirect === "index") {//クリック元ページ判定
+                res.redirect('/');
+            } else if(redirect === "profile") {
+                res.redirect('/profile');
+            }
+        }
+    );
+});
+
 //アカウント新規登録ページ
 app.get('/signup', (req, res) => {
     res.render('signup.ejs', {errors: []});
@@ -429,11 +449,6 @@ app.get('/goodcancel/:postNum', authenticateUser, (req, res) => {
 
 app.get('/test', (req, res) => {
     res.render('test.ejs');
-});
-app.post('/like', (req, res) => {
-    const { postId } = req.body;
-    console.log(postId);
-  
 });
 
 //ログアウト
