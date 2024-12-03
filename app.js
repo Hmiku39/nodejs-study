@@ -300,6 +300,8 @@ app.post('/deletepost', authenticateUser, (req, res) => {
                 res.redirect('/');
             } else if(redirect === "profile") {
                 res.redirect('/profile');
+            } else {
+                res.redirect('/');
             }
         }
     );
@@ -401,8 +403,9 @@ app.post('/login', (req, res) => {
 });
 
 //GOOD機能
-app.get('/good/:postNum', authenticateUser, (req, res) => {
-    const postNum = req.params.postNum;
+app.post('/good', authenticateUser, (req, res) => {
+    const postNum = req.body.postNum;
+    const redirect = req.body.redirect;
     const date = new Date();
     const goodDate = date.toFormat('YYYYMMDDHH24MISS');//GOOD日時取得
     connection.query(
@@ -417,7 +420,21 @@ app.get('/good/:postNum', authenticateUser, (req, res) => {
                 (error, results) => {
                     console.log(results);
                     console.log(error);
-                    res.redirect('/');
+                    if (redirect === "index") {//クリック元ページ判定
+                        res.redirect('/');
+                    } else if(redirect === "profile") {
+                        connection.query(
+                            `SELECT acount.userId AS acount_userId
+                            FROM acount
+                            INNER JOIN post ON post.postNum = ? AND acount.acountNum = post.acountNum`,
+                            [postNum],
+                            (error, results) => {
+                                res.redirect('/profile?userid=' + results[0].acount_userId);      
+                            }
+                        );
+                    } else {
+                        res.redirect('/');
+                    }
                 }
             );
         }
@@ -425,8 +442,9 @@ app.get('/good/:postNum', authenticateUser, (req, res) => {
 });
 
 //GOODキャンセル
-app.get('/goodcancel/:postNum', authenticateUser, (req, res) => {
-    const postNum = req.params.postNum;
+app.post('/goodcancel', authenticateUser, (req, res) => {
+    const postNum = req.body.postNum;
+    const redirect = req.body.redirect;
     const date = new Date();
     const goodDate = date.toFormat('YYYYMMDDHH24MISS');//GOOD日時取得
     connection.query(
@@ -441,7 +459,21 @@ app.get('/goodcancel/:postNum', authenticateUser, (req, res) => {
                 (error, results) => {
                     console.log(results);
                     console.log(error);
-                    res.redirect('/');
+                    if (redirect === "index") {//クリック元ページ判定
+                        res.redirect('/');
+                    } else if(redirect === "profile") {
+                        connection.query(
+                            `SELECT acount.userId AS acount_userId
+                            FROM acount
+                            INNER JOIN post ON post.postNum = ? AND acount.acountNum = post.acountNum`,
+                            [postNum],
+                            (error, results) => {
+                                res.redirect('/profile?userid=' + results[0].acount_userId);      
+                            }
+                        );
+                    } else {
+                        res.redirect('/');
+                    }
                 }
             );
         }
