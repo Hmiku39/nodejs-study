@@ -105,11 +105,14 @@ app.get('/profile', (req, res) => {
                         post.good AS post_good,      
                         acount.acountNum AS acount_acountNum,
                         acount.userId AS acount_userId,
-                        acount.displayName AS acount_displayName
+                        acount.displayName AS acount_displayName,
+                        good.postNum AS good_postNum,
+                        good.acountNum AS good_acountNum
                         FROM post 
                         INNER JOIN acount ON acount.acountNum = ? AND post.acountNum = acount.acountNum AND deleteFlg = "0"
+                        LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
                         ORDER BY datetime DESC`,
-                        [req.session.acountNum],
+                        [req.session.acountNum, req.session.acountNum],
                         (error, results) => {
                             // console.log(results);
                             console.log(error);
