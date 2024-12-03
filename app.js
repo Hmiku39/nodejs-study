@@ -179,8 +179,8 @@ app.get('/profile', (req, res) => {
 });
 
 //フォロー機能
-app.get('/follow', authenticateUser, (req, res) => {
-    const followId = req.query.followid;
+app.post('/follow', authenticateUser, (req, res) => {
+    const followId = req.body.followid;
     const date = new Date();
     const followDate = date.toFormat('YYYYMMDDHH24MISS');//GOOD日時取得
     connection.query(
@@ -221,8 +221,8 @@ app.get('/follow', authenticateUser, (req, res) => {
 });
 
 //フォロー解除機能
-app.get('/unfollow', authenticateUser, (req, res) => {
-    const followId = req.query.followid;
+app.post('/unfollow', authenticateUser, (req, res) => {
+    const followId = req.body.followid;
     connection.query(
         `UPDATE acount SET follow = follow - 1 WHERE acount.acountNum = ?;`,
         [req.session.acountNum],
