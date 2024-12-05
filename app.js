@@ -12,13 +12,26 @@ app.use(express.static('public'));
 //フォームの値を受け取れるようにしたやつ
 app.use(express.urlencoded({extended: false}));
 
-//MYSQL接続情報
-const connection = mysql.createConnection({
+// MYSQL接続情報をプールに変更
+const pool = mysql.createPool({
     host: '192.168.100.25',
     user: 'test',
     password: 'test',
-    database: 'web_app'
+    database: 'web_app',
+    connectionLimit: 10, // プール内の最大接続数
 });
+// プールを使ったクエリ関数の作成
+const queryDatabase = (query, params) => {
+    return new Promise((resolve, reject) => {
+        pool.query(query, params, (error, results) => {
+            if (error) {
+                return reject(error);
+            }
+            resolve(results);
+        });
+    });
+};
+
 //セッション使用準備
 app.use(
     session({
@@ -50,33 +63,33 @@ const authenticateUser = (req, res, next) => {//ログインしていないユ�
 };
 
 //トップページ
-app.get('/', (req, res) => {
+app.get('/', async (req, res) => {
 
     if (res.locals.isLoggedIn === true){
         const today = new Date();//現在の時刻と投稿時間との比較のため
-        // console.log(todayTime);
-        connection.query(
-            `SELECT post.postNum AS post_postNum,
-            post.acountNum AS post_acountNum,
-            post.content AS post_content,
-            post.datetime AS post_datetime,
-            post.good AS post_good,      
-            acount.acountNum AS acount_acountNum,
-            acount.userId AS acount_userId,
-            acount.displayName AS acount_displayName,
-            good.postNum AS good_postNum,
-            good.acountNum AS good_acountNum
-            FROM post 
-            INNER JOIN acount ON post.acountNum = acount.acountNum AND deleteFlg = "0"
-            LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
-            ORDER BY datetime DESC`,
-            [req.session.acountNum],
-            (error, results) => {
-                console.log(results);
-                console.log(error);
-                res.render('index.ejs',{posts: results, recentPost});
-            }
-        );
+        try {
+            const results = await queryDatabase(
+                `SELECT post.postNum AS post_postNum,
+                post.acountNum AS post_acountNum,
+                post.content AS post_content,
+                post.datetime AS post_datetime,
+                post.good AS post_good,      
+                acount.acountNum AS acount_acountNum,
+                acount.userId AS acount_userId,
+                acount.displayName AS acount_displayName,
+                good.postNum AS good_postNum,
+                good.acountNum AS good_acountNum
+                FROM post 
+                INNER JOIN acount ON post.acountNum = acount.acountNum AND deleteFlg = "0"
+                LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
+                ORDER BY datetime DESC`,
+                [req.session.acountNum]
+            );
+            res.render('index.ejs',{posts: results, recentPost});
+        } catch (error) {
+            console.error(error);
+            res.status(500).send('Internal Server Error');
+        }
     } else {
         // res.render('login.ejs', {formErrors: [], loginError: false});
         res.redirect('/login');
@@ -84,94 +97,82 @@ app.get('/', (req, res) => {
 });
 
 //プロフィールページ
-app.get('/profile', (req, res) => {
+app.get('/profile', async (req, res) => {
     const userId = req.query.userid;
     if (res.locals.isLoggedIn === true){
         const today = new Date();//現在の時刻と投稿時間との比較のため
         // console.log(todayTime);
         if (userId === undefined) {//ユーザーIDの指定がない場合自分のプロフィールページを表示
-            connection.query(
-                `SELECT * FROM acount WHERE acountNum = ?`,
-                [req.session.acountNum],
-                (error, profResult) => {
-                    console.log(profResult);
-                    console.log(error);
-                
-                    connection.query(
-                        `SELECT post.postNum AS post_postNum,
-                        post.acountNum AS post_acountNum,
-                        post.content AS post_content,
-                        post.datetime AS post_datetime,
-                        post.good AS post_good,      
-                        acount.acountNum AS acount_acountNum,
-                        acount.userId AS acount_userId,
-                        acount.displayName AS acount_displayName,
-                        good.postNum AS good_postNum,
-                        good.acountNum AS good_acountNum
-                        FROM post 
-                        INNER JOIN acount ON acount.acountNum = ? AND post.acountNum = acount.acountNum AND deleteFlg = "0"
-                        LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
-                        ORDER BY post.datetime DESC`,
-                        [req.session.acountNum, req.session.acountNum],
-                        (error, results) => {
-                            // console.log(results);
-                            console.log(error);
-                            console.log('はははははははは');
-                            console.log(results);
-                            res.render('profile.ejs',{posts: results, prof: profResult, recentPost, followStatus: 'myprofile'});
-                        }
-                    );
-                }
-            );
-        } else {//URLのユーザーIDのプロフィールページ表示
-            connection.query(
-                `SELECT * FROM acount WHERE userId = ?`,
-                [userId],
-                (prof_error, profResult) => {
-                    console.log(profResult);
-                    console.log(prof_error);
-                    if (profResult[0].acountNum === req.session.acountNum){//自分のユーザーIDならQUERY無しURLにリダイレクト
-                        res.redirect('/profile');
-                    }
-              
-                    connection.query(
-                        `SELECT post.postNum AS post_postNum,
-                        post.acountNum AS post_acountNum,
-                        post.content AS post_content,
-                        post.datetime AS post_datetime,
-                        post.good AS post_good,      
-                        acount.acountNum AS acount_acountNum,
-                        acount.userId AS acount_userId,
-                        acount.displayName AS acount_displayName,
-                        good.postNum AS good_postNum,
-                        good.acountNum AS good_acountNum
-                        FROM post 
-                        INNER JOIN acount ON acount.userId = ? AND post.acountNum = acount.acountNum AND deleteFlg = "0"
-                        LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
-                        ORDER BY post.datetime DESC`,
-                        [userId, req.session.acountNum],
-                        (error, results) => {
-                            // console.log(results);
-                            console.log(error);
+            try {
+                const profResult = await queryDatabase(
+                    `SELECT * FROM acount WHERE acountNum = ?`,
+                    [req.session.acountNum]
+                );
+                const results = await queryDatabase(
+                    `SELECT post.postNum AS post_postNum,
+                    post.acountNum AS post_acountNum,
+                    post.content AS post_content,
+                    post.datetime AS post_datetime,
+                    post.good AS post_good,      
+                    acount.acountNum AS acount_acountNum,
+                    acount.userId AS acount_userId,
+                    acount.displayName AS acount_displayName,
+                    good.postNum AS good_postNum,
+                    good.acountNum AS good_acountNum
+                    FROM post 
+                    INNER JOIN acount ON acount.acountNum = ? AND post.acountNum = acount.acountNum AND deleteFlg = "0"
+                    LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
+                    ORDER BY post.datetime DESC`,
+                    [req.session.acountNum, req.session.acountNum]
+                );
+                res.render('profile.ejs',{posts: results, prof: profResult, recentPost, followStatus: 'myprofile'});
+            } catch (error) {
+                console.error(error);
+                res.status(500).send('Internal Server Error');
+            }
 
-                            //対象のアカウントをフォロー中かチェック
-                            connection.query(
-                                `SELECT * FROM follow WHERE acountNum = ? AND followAcountNum = ?`,
-                                [req.session.acountNum, profResult[0].acountNum],
-                                (follow_error, followResult) => {
-                                    console.log(followResult);
-                                    console.log(follow_error);
-                                    if (followResult.length > 0) {//一致するデータがなければまだフォローしていない
-                                        res.render('profile.ejs',{posts: results, prof: profResult, recentPost, followStatus: true});
-                                    } else {
-                                        res.render('profile.ejs',{posts: results, prof: profResult, recentPost, followStatus: false});
-                                    }
-                                }
-                            );
-                        }
-                    );
+        } else {//URLのユーザーIDのプロフィールページ表示
+            try {
+                const profResult = await queryDatabase(
+                `SELECT * FROM acount WHERE userId = ?`,
+                [userId]
+                );  
+                if (profResult[0].acountNum === req.session.acountNum){//自分のユーザーIDならQUERY無しURLにリダイレクト
+                    res.redirect('/profile');
                 }
-            );
+                
+                const results = await queryDatabase(
+                    `SELECT post.postNum AS post_postNum,
+                    post.acountNum AS post_acountNum,
+                    post.content AS post_content,
+                    post.datetime AS post_datetime,
+                    post.good AS post_good,      
+                    acount.acountNum AS acount_acountNum,
+                    acount.userId AS acount_userId,
+                    acount.displayName AS acount_displayName,
+                    good.postNum AS good_postNum,
+                    good.acountNum AS good_acountNum
+                    FROM post 
+                    INNER JOIN acount ON acount.userId = ? AND post.acountNum = acount.acountNum AND deleteFlg = "0"
+                    LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
+                    ORDER BY post.datetime DESC`,
+                    [userId, req.session.acountNum]
+                );
+                //対象のアカウントをフォロー中かチェック
+                const followResult = await queryDatabase(
+                    `SELECT * FROM follow WHERE acountNum = ? AND followAcountNum = ?`,
+                    [req.session.acountNum, profResult[0].acountNum]
+                );
+
+                if (followResult.length > 0) {//一致するデータがなければまだフォローしていない
+                    res.render('profile.ejs',{posts: results, prof: profResult, recentPost, followStatus: true});
+                } else {
+                    res.render('profile.ejs',{posts: results, prof: profResult, recentPost, followStatus: false});
+                }
+            } catch (error) {
+            console.error(error);
+            res.status(500).send('Internal Server Error');
+            }
         }
     } else {
         // res.render('login.ejs', {formErrors: [], loginError: false});
@@ -180,85 +181,59 @@ app.get('/profile', (req, res) => {
 });
 
 //フォロー機能
-app.post('/follow', authenticateUser, (req, res) => {
+app.post('/follow', authenticateUser, async (req, res) => {
     const followId = req.body.followid;
     const date = new Date();
     const followDate = date.toFormat('YYYYMMDDHH24MISS');//GOOD日時取得
-    connection.query(
-        `UPDATE acount SET follow = follow + 1 WHERE acount.acountNum = ?;`,
-        [req.session.acountNum],
-        (error_follow, results_follow) => {
-            console.log(results_follow);
-            console.log(error_follow);
-            
-            connection.query(
-                `UPDATE acount SET followers = followers + 1 WHERE acount.acountNum = ?;`,
-                [followId],
-                (error_followers, results_followers) => {
-                    console.log(results_followers);
-                    console.log(error_followers);
-                
-                    connection.query(
-                        `INSERT INTO follow (acountNum, followAcountNum, followDate) VALUES (?, ?, ?)`,
-                        [req.session.acountNum, followId ,followDate],
-                        (error_followR, results_followR) => {
-                            console.log(results_followR);
-                            console.log(error_followR);
-                            connection.query(
-                                `SELECT userId FROM acount WHERE acountNum = ?`,
-                                [followId],
-                                (error, result) => {
-                                    console.log(result);
-                                    console.log(error);
-                                    res.redirect('/profile?userid='+result[0].userId);
-                                }
-                            );
-                        }
-                    );
-                }
-            );
-        }
-    );
+    try {
+        const results_follow = await queryDatabase(
+            `UPDATE acount SET follow = follow + 1 WHERE acount.acountNum = ?;`,
+            [req.session.acountNum]
+        );
+        const results_followers = await queryDatabase(
+            `UPDATE acount SET followers = followers + 1 WHERE acount.acountNum = ?;`,
+            [followId]
+        );
+        const results_followR = await queryDatabase(
+            `INSERT INTO follow (acountNum, followAcountNum, followDate) VALUES (?, ?, ?)`,
+            [req.session.acountNum, followId ,followDate]
+        );
+        const result = await queryDatabase(
+            `SELECT userId FROM acount WHERE acountNum = ?`,
+            [followId]
+        );
+        res.redirect('/profile?userid='+result[0].userId);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+    }
 });
 
 //フォロー解除機能
-app.post('/unfollow', authenticateUser, (req, res) => {
+app.post('/unfollow', authenticateUser, async (req, res) => {
     const followId = req.body.followid;
-    connection.query(
-        `UPDATE acount SET follow = follow - 1 WHERE acount.acountNum = ?;`,
-        [req.session.acountNum],
-        (error_follow, results_follow) => {
-            console.log(results_follow);
-            console.log(error_follow);
-            
-            connection.query(
-                `UPDATE acount SET followers = followers - 1 WHERE acount.acountNum = ?;`,
-                [followId],
-                (error_followers, results_followers) => {
-                    console.log(results_followers);
-                    console.log(error_followers);
-                
-                    connection.query(
-                        `DELETE FROM follow WHERE acountNum = ? AND followAcountNum = ?`,
-                        [req.session.acountNum, followId],
-                        (error_followR, results_followR) => {
-                            console.log(results_followR);
-                            console.log(error_followR);
-                            connection.query(
-                                `SELECT userId FROM acount WHERE acountNum = ?`,
-                                [followId],
-                                (error, result) => {
-                                    console.log(result);
-                                    console.log(error);
-                                    res.redirect('/profile?userid='+result[0].userId);
-                                }
-                            );
-                        }
-                    );
-                }
-            );
-        }
-    );
+    try {
+        const results_follow = await queryDatabase(
+            `UPDATE acount SET follow = follow - 1 WHERE acount.acountNum = ?;`,
+            [req.session.acountNum]
+        );            
+        const results_followers = await queryDatabase(
+            `UPDATE acount SET followers = followers - 1 WHERE acount.acountNum = ?;`,
+            [followId]
+        );
+        const results_followR = await queryDatabase(
+            `DELETE FROM follow WHERE acountNum = ? AND followAcountNum = ?`,
+            [req.session.acountNum, followId]
+        );
+        const result = await queryDatabase(
+            `SELECT userId FROM acount WHERE acountNum = ?`,
+            [followId]
+        );
+        res.redirect('/profile?userid='+result[0].userId);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+    }
 });
 
 //投稿ページ
@@ -271,40 +246,42 @@ app.get('/post', (req, res) => {
 });
 
 //投稿処理
-app.post('/createPost',(req, res) => {
+app.post('/createPost', async (req, res) => {
     const date = new Date();
     const postTime = date.toFormat('YYYYMMDDHH24MISS');//投稿日時取得
     console.log(postTime);
-    connection.query(
-        `INSERT INTO post (acountNum, content, datetime) VALUES (?, ?, ?)`,
-        [req.session.acountNum, req.body.content, postTime],
-        (error, results) => {
-            console.log(error);
-            res.redirect('/');
-        })
-    }
-);
+    try {
+        const results = await queryDatabase(
+            `INSERT INTO post (acountNum, content, datetime) VALUES (?, ?, ?)`,
+            [req.session.acountNum, req.body.content, postTime]
+        );
+        res.redirect('/');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+    }   
+});
 
 //投稿内容の削除
-app.post('/deletepost', authenticateUser, (req, res) => {
+app.post('/deletepost', authenticateUser, async (req, res) => {
     const postNum = req.body.postNum;
     const redirect = req.body.redirect;
-    connection.query(
-        `UPDATE post SET deleteFlg = 1 WHERE postNum = ?;`,
-        [postNum],
-        (error, results) => {
-            console.log(results);
-            console.log(error);
-
-            if (redirect === "index") {//クリック元ページ判定
-                res.redirect('/');
-            } else if(redirect === "profile") {
-                res.redirect('/profile');
-            } else {
-                res.redirect('/');
-            }
+    try {
+        const results = await queryDatabase(
+            `UPDATE post SET deleteFlg = 1 WHERE postNum = ?;`,
+            [postNum]
+        );
+        if (redirect === "index") {//クリック元ページ判定
+            res.redirect('/');
+        } else if(redirect === "profile") {
+            res.redirect('/profile');
+        } else {
+            res.redirect('/');
         }
-    );
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+    }
 });
 
 //アカウント新規登録ページ
@@ -313,52 +290,34 @@ app.get('/signup', (req, res) => {
 });
 
 //アカウント登録処理
-app.post('/signup', (req, res, next) => {
-    const userid = req.body.userid;
-    const displayName = req.body.displayName;
-    const email = req.body.email;
-    const password = req.body.password;
-    const agree = req.body.agree;
+app.post('/signup', async (req, res, next) => {
+    const { userid, displayName, email, password, agree } = req.body;
     const errors = [];
-    if(userid === ''){
-        errors[0] = true;
-      }
-      if(displayName === ''){
-        errors[1] = true;
-      }
-      if(email === ''){
-        errors[2] = true;
-      }
-      if(password === ''){
-        errors[3] = true;
-      }
-      if(agree === undefined){
-        errors[4] = true;
-      }
-      if(errors.length > 0){
-        res.render('signup.ejs', {errors: errors});
-      }else{
-        next();
-      }
-},
-    (req, res) => {
-        const userid = req.body.userid;
-        const displayName = req.body.displayName;
-        const email = req.body.email;
-        const password = req.body.password;
-        const date = new Date();
-        const signupDate = date.toFormat('YYYYMMDDHH24MISS');//投稿日時取得
-
-        connection.query(
-            `INSERT INTO acount (userId, displayName, email, password, signupDate) VALUES (?, ?, ? ,?, ?)`,
-            [userid, displayName, email, password, signupDate],
-            (error, results) => {
-                req.session.acountNum = results.insertId;
-                res.redirect('/');
-            }
-        );
+    // フォームのエラーチェック
+    if (!userid) errors.push('※ユーザーIDは必須です');
+    if (!displayName) errors.push('※表示名は必須です');
+    if (!email) errors.push('※メールアドレスは必須です');
+    if (!password) errors.push('※パスワードは必須です');
+    if (!agree) errors.push('※利用規約に同意してください');
+    if(errors.length > 0){
+        console.log(errors);
+        return res.render('signup.ejs', {errors});
     }
-);
+    //今後ここでパスワードのハッシュ化を行う
+    const date = new Date();
+    const signupDate = date.toFormat('YYYYMMDDHH24MISS');//投稿日時取得
+    try {
+        const results = await queryDatabase(
+            `INSERT INTO acount (userId, displayName, email, password, signupDate) VALUES (?, ?, ? ,?, ?)`,
+            [userid, displayName, email, password, signupDate]
+        );
+        req.session.acountNum = results.insertId;
+        res.redirect('/');
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send('Internal Server Error');
+    }
+});
 
 //ログインページ
 app.get('/login', (req, res) => {
@@ -366,7 +325,7 @@ app.get('/login', (req, res) => {
 });
 
 //ログイン処理
-app.post('/login', (req, res) => {
+app.post('/login', async (req, res) => {
     const email = req.body.email;
     const password = req.body.password;
     const formErrors = [];
@@ -380,104 +339,96 @@ app.post('/login', (req, res) => {
     if(formErrors.length > 0){
         res.render('login.ejs', {formErrors: formErrors, loginError: loginError});
     }else{
-        connection.query(
-            `SELECT * FROM acount WHERE email = ?`,
-            [email],
-            (error, results) => {
-                console.log(results);
-                console.log(error);
-                console.log(results.length);
-                if (results.length > 0) {
-                    if (req.body.password === results[0].password){
-                        req.session.acountNum = results[0].acountNum;
-                        res.redirect('/');
-                    } else {
-                        res.render('login.ejs', {formErrors: formErrors, loginError: true});
-                    }
+        try {
+            const results = await queryDatabase(
+                `SELECT * FROM acount WHERE email = ?`,
+                [email]
+            );
+            console.log(results);
+            console.log(results.length);
+            if (results.length > 0) {
+                if (req.body.password === results[0].password){
+                    req.session.acountNum = results[0].acountNum;
+                    res.redirect('/');
                 } else {
                     res.render('login.ejs', {formErrors: formErrors, loginError: true});
                 }
+            } else {
+                res.render('login.ejs', {formErrors: formErrors, loginError: true});
             }
-        );
+        } catch (error) {
+            console.error(error);
+            res.status(500).send('Internal Server Error');
+        }   
     }
 });
 
 //GOOD機能
-app.post('/good', authenticateUser, (req, res) => {
+app.post('/good', authenticateUser, async (req, res) => {
     const postNum = req.body.postNum;
     const redirect = req.body.redirect;
     const date = new Date();
     const goodDate = date.toFormat('YYYYMMDDHH24MISS');//GOOD日時取得
-    connection.query(
-        `UPDATE post SET good = good + 1 WHERE post.postNum = ?;`,
-        [postNum],
-        (error, results) => {
-            console.log(results);
-            console.log(error);
-            connection.query(
-                `INSERT INTO good (acountNum, postNum, goodDate) VALUES (?, ?, ?)`,
-                [req.session.acountNum, postNum ,goodDate],
-                (error, results) => {
-                    console.log(results);
-                    console.log(error);
-                    if (redirect === "index") {//クリック元ページ判定
-                        res.redirect('/');
-                    } else if(redirect === "profile") {
-                        connection.query(
-                            `SELECT acount.userId AS acount_userId
-                            FROM acount
-                            INNER JOIN post ON post.postNum = ? AND acount.acountNum = post.acountNum`,
-                            [postNum],
-                            (error, results) => {
-                                res.redirect('/profile?userid=' + results[0].acount_userId);      
-                            }
-                        );
-                    } else {
-                        res.redirect('/');
-                    }
-                }
+    try {
+        const goodPlusResult = await queryDatabase(
+            `UPDATE post SET good = good + 1 WHERE post.postNum = ?;`,
+            [postNum]
+        );
+        const goodInsert = await queryDatabase(
+            `INSERT INTO good (acountNum, postNum, goodDate) VALUES (?, ?, ?)`,
+            [req.session.acountNum, postNum ,goodDate]
+        );
+        if (redirect === "index") {//クリック元ページ判定
+            return res.redirect('/');
+        } else if(redirect === "profile") {
+            const results = await queryDatabase(
+                `SELECT acount.userId AS acount_userId
+                FROM acount
+                INNER JOIN post ON post.postNum = ? AND acount.acountNum = post.acountNum`,
+                [postNum]
             );
+            return res.redirect('/profile?userid=' + results[0].acount_userId);
+        } else {
+            return res.redirect('/');
         }
-    );
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send('Internal Server Error');
+    }
 });
 
 //GOODキャンセル
-app.post('/goodcancel', authenticateUser, (req, res) => {
+app.post('/goodcancel', authenticateUser, async (req, res) => {
     const postNum = req.body.postNum;
     const redirect = req.body.redirect;
     const date = new Date();
     const goodDate = date.toFormat('YYYYMMDDHH24MISS');//GOOD日時取得
-    connection.query(
-        `UPDATE post SET good = good - 1 WHERE post.postNum = ?;`,
-        [postNum],
-        (error, results) => {
-            console.log(results);
-            console.log(error);
-            connection.query(
-                `DELETE FROM good WHERE acountNum = ? AND postNum = ?`,
-                [req.session.acountNum, postNum],
-                (error, results) => {
-                    console.log(results);
-                    console.log(error);
-                    if (redirect === "index") {//クリック元ページ判定
-                        res.redirect('/');
-                    } else if(redirect === "profile") {
-                        connection.query(
-                            `SELECT acount.userId AS acount_userId
-                            FROM acount
-                            INNER JOIN post ON post.postNum = ? AND acount.acountNum = post.acountNum`,
-                            [postNum],
-                            (error, results) => {
-                                res.redirect('/profile?userid=' + results[0].acount_userId);      
-                            }
-                        );
-                    } else {
-                        res.redirect('/');
-                    }
-                }
+    try {
+        const goodMinusResult = await queryDatabase(
+            `UPDATE post SET good = good - 1 WHERE post.postNum = ?;`,
+            [postNum]
+        );
+        const goodDelete = await queryDatabase(
+            `DELETE FROM good WHERE acountNum = ? AND postNum = ?`,
+            [req.session.acountNum, postNum]
+        );
+        if (redirect === "index") {//クリック元ページ判定
+            return res.redirect('/');
+        } else if(redirect === "profile") {
+            const results = await queryDatabase(
+                `SELECT acount.userId AS acount_userId
+                FROM acount
+                INNER JOIN post ON post.postNum = ? AND acount.acountNum = post.acountNum`,
+                [postNum]
             );
+            return res.redirect('/profile?userid=' + results[0].acount_userId);
+        } else {
+            return res.redirect('/');
         }
-    );
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send('Internal Server Error');
+    }
 });
 
 app.get('/test', (req, res) => {
