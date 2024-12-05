@@ -4,40 +4,35 @@
     <div class="container">
         <h2>新規登録</h2>
         <form action="/signup" method="post">
+            <% if (errors && errors.length > 0) { %>
+                <div class="form-text text-danger">
+                    <% errors.forEach(function(error) { %>
+                        <p><%= error %></p>
+                    <% }); %>
+                </div>
+            <% } %>
             <div class="row mb-3">
                 <label class="col-sm-2 col-form-label">ユーザーID</label>
                 <div class="col-sm-10">
                     <input type="text" name="userid" class="form-control" aria-describedby="emailHelp">
-                <% if (errors[0] === true) { %>
-                <div class="form-text text-danger">※ユーザーIDを入力してください</div>
-                <% } %>
                 </div>
             </div>
             <div class="row mb-3">
                 <label class="col-sm-2 col-form-label">ユーザーネーム</label>
                 <div class="col-sm-10">
                     <input type="text" name="displayName" class="form-control" aria-describedby="emailHelp">
-                <% if (errors[1] === true) { %>
-                <div class="form-text text-danger">※ユーザーネームを入力してください</div>
-                <% } %>
                 </div>
             </div>
             <div class="row mb-3">
                 <label class="col-sm-2 col-form-label">メールアドレス</label>
                 <div class="col-sm-10">
                     <input type="email" name="email" class="form-control" aria-describedby="emailHelp">
-                    <% if (errors[2] === true) { %>
-                    <div class="form-text text-danger">※メールアドレスを入力してください</div>
-                    <% } %>
                 </div>
             </div>
             <div class="row mb-3">
                 <label class="col-sm-2 col-form-label">パスワード</label>
                 <div class="col-sm-10">
                     <input type="password" name="password" class="form-control">
-                    <% if (errors[3] === true) { %>
-                    <div class="form-text text-danger">※パスワードを入力してください</div>
-                    <% } %>
                 </div>
             </div>
             <div class="row mb-3">
@@ -45,9 +40,6 @@
                     <div class="form-check">
                         <input type="checkbox" name="agree" class="form-check-input" value="true">
                         <label class="form-check-label">利用規約に同意する</label>
-                        <% if (errors[4] === true) { %>
-                        <div class="form-text text-danger">※利用規約に同意してください</div>
-                        <% } %>
                     </div>
                 </div>
             </div>
