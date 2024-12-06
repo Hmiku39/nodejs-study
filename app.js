@@ -180,6 +180,21 @@ app.get('/profile', async (req, res) => {
     }
 });
 
+//プロフィール編集ページ
+app.get('/profeditor', authenticateUser, async (req, res) => {
+    if (req.session.acountNum != undefined){
+        const results = await queryDatabase(
+            `SELECT * FROM acount WHERE acountNum = ?`,
+            [req.session.acountNum]
+        );
+
+        return res.render('profeditor.ejs', {acount: results});
+        
+    } else {
+        return res.redirect('/login');
+    }
+});
+
 //フォロー機能
 app.post('/follow', authenticateUser, async (req, res) => {
     const followId = req.body.followid;

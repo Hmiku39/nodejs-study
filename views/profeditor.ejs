@@ -1,0 +1,42 @@
+<%- include('head'); %>
+<body>
+    <%- include('header'); %>
+    <div class="container">
+        <h1>アカウント設定</h1>
+
+        <form action="/profupdate" method="post">
+            <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">ユーザーID</label>
+                <div class="col-sm-10">
+                    <input type="text" name="userid" class="form-control" value="<%= acount[0].userId %>" aria-describedby="emailHelp">
+                </div>
+            </div>
+            <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">ユーザーネーム</label>
+                <div class="col-sm-10">
+                    <input type="text" name="displayName" class="form-control" value="<%= acount[0].displayName %>" aria-describedby="emailHelp">
+                </div>
+            </div>
+            <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">メールアドレス</label>
+                <div class="col-sm-10">
+                    <input type="text" name="email" class="form-control" value="<%= acount[0].email %>" aria-describedby="emailHelp" disabled>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">パスワード</label>
+                <div class="col-sm-10">
+                    <input type="password" name="password" class="form-control">
+                </div>
+            </div>
+            <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">パスワードの確認</label>
+                <div class="col-sm-10">
+                    <input type="password" name="password2" class="form-control">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">変更を保存</button>
+            <a href="/profile" class="btn btn-secondary"">プロフィールに戻る</a>
+        </form>
+    </div>
+<%- include('footer'); %>
