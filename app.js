@@ -188,10 +188,60 @@ app.get('/profeditor', authenticateUser, async (req, res) => {
             [req.session.acountNum]
         );
 
-        return res.render('profeditor.ejs', {acount: results});
+        return res.render('profeditor.ejs', {errors: [], acount: results, editData: results[0].introduction});
         
     } else {
         return res.redirect('/login');
+    }
+});
+
+//プロフィール編集処理
+app.post('/profeditor', authenticateUser, async (req, res) => {
+    const { userId, displayName, email, password, password2, introduction } = req.body;
+    const errors = [];
+    // フォームのエラーチェック
+    if (!userId) errors.push('※ユーザーIDは必須です');
+    if (!displayName) errors.push('※表示名は必須です');
+    if (!email) errors.push('※メールアドレスは必須です');
+    if (!password) errors.push('※パスワードは必須です');
+    if (password != password2) errors.push('※パスワードをもう一度入力してください');
+    
+    try {
+        //未入力項目がある場合もう再度編集ページへ
+        if (errors.length > 0) {
+            console.log(errors);
+            const results = await queryDatabase(
+                `SELECT * FROM acount WHERE acountNum = ?`,
+                [req.session.acountNum]
+            );
+            return res.render('profeditor.ejs', {errors, acount: results, editData: introduction});
+        }
+        //ユーザーIDの重複チェック
+        const useridCheck = await queryDatabase(
+            `SELECT * FROM acount WHERE userId = ?`,
+            [userId]
+        );
+        //自分のuserIdを除いたuserIdの重複チェック
+        if (useridCheck.length > 0 && useridCheck[0].acountNum != req.session.acountNum){
+            errors.push('※ユーザーID['+useridCheck[0].userId+']は既に使われています');
+            const results = await queryDatabase(
+                `SELECT * FROM acount WHERE acountNum = ?`,
+                [req.session.acountNum]
+            );
+            return res.render('profeditor.ejs', {errors, acount: results, editData: introduction});
+        } else {
+            const results = await queryDatabase(
+                `UPDATE acount SET 
+                userId = ?, displayName = ?, email = ?,
+                password = ?, introduction = ?
+                WHERE acount.acountNum = ?;`,
+                [userId, displayName, email, password, introduction, req.session.acountNum]
+            );
+            return res.redirect('/profile');
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
     }
 });
 
@@ -217,7 +267,7 @@ app.post('/follow', authenticateUser, async (req, res) => {
             `SELECT userId FROM acount WHERE acountNum = ?`,
             [followId]
         );
-        res.redirect('/profile?userid='+result[0].userId);
+        return res.redirect('/profile?userid='+result[0].userId);
     } catch (error) {
         console.error(error);
         res.status(500).send('Internal Server Error');
@@ -244,7 +294,7 @@ app.post('/unfollow', authenticateUser, async (req, res) => {
             `SELECT userId FROM acount WHERE acountNum = ?`,
             [followId]
         );
-        res.redirect('/profile?userid='+result[0].userId);
+        return res.redirect('/profile?userid='+result[0].userId);
     } catch (error) {
         console.error(error);
         res.status(500).send('Internal Server Error');
@@ -314,7 +364,7 @@ app.post('/signup', async (req, res, next) => {
     if (!email) errors.push('※メールアドレスは必須です');
     if (!password) errors.push('※パスワードは必須です');
     if (!agree) errors.push('※利用規約に同意してください');
-    if(errors.length > 0){
+    if (errors.length > 0) {
         console.log(errors);
         return res.render('signup.ejs', {errors});
     }
@@ -327,7 +377,7 @@ app.post('/signup', async (req, res, next) => {
             [userid, displayName, email, password, signupDate]
         );
         req.session.acountNum = results.insertId;
-        res.redirect('/');
+        return res.redirect('/');
     } catch (error) {
         console.error(error);
         return res.status(500).send('Internal Server Error');
