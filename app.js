@@ -1,8 +1,21 @@
 const express = require('express');
 const mysql = require('mysql');
 const session = require('express-session');
+const https = require('https');
+const fs = require('fs');
 const app = express();
 const { recentPost } = require('./recentpost');//投稿日時と現在の時刻の差分計算
+
+// 自己署名証明書の読み込み
+const options = {
+    key: fs.readFileSync('./privateKey.pem'), // 秘密鍵
+    cert: fs.readFileSync('./certificate.pem') // 証明書
+};
+
+// HTTPSサーバーを起動
+https.createServer(options, app).listen(8443, () => {
+    console.log('HTTPS server running on port 8443');
+});
 
 //時刻取得
 require('date-utils');
@@ -85,14 +98,14 @@ app.get('/', async (req, res) => {
                 ORDER BY datetime DESC`,
                 [req.session.acountNum]
             );
-            res.render('index.ejs',{posts: results, recentPost});
+            return res.render('index.ejs',{posts: results, recentPost});
         } catch (error) {
             console.error(error);
-            res.status(500).send('Internal Server Error');
+            return res.status(500).send('Internal Server Error');
         }
     } else {
         // res.render('login.ejs', {formErrors: [], loginError: false});
-        res.redirect('/login');
+        return res.redirect('/login');
     }
 });
 
@@ -125,10 +138,10 @@ app.get('/profile', async (req, res) => {
                     ORDER BY post.datetime DESC`,
                     [req.session.acountNum, req.session.acountNum]
                 );
-                res.render('profile.ejs',{posts: results, prof: profResult, recentPost, followStatus: 'myprofile'});
+                return res.render('profile.ejs',{posts: results, prof: profResult, recentPost, followStatus: 'myprofile'});
             } catch (error) {
                 console.error(error);
-                res.status(500).send('Internal Server Error');
+                return res.status(500).send('Internal Server Error');
             }
 
         } else {//URLのユーザーIDのプロフィールページ表示
@@ -138,7 +151,7 @@ app.get('/profile', async (req, res) => {
                 [userId]
                 );  
                 if (profResult[0].acountNum === req.session.acountNum){//自分のユーザーIDならQUERY無しURLにリダイレクト
-                    res.redirect('/profile');
+                    return res.redirect('/profile');
                 }
                 
                 const results = await queryDatabase(
@@ -165,18 +178,18 @@ app.get('/profile', async (req, res) => {
                 );
 
                 if (followResult.length > 0) {//一致するデータがなければまだフォローしていない
-                    res.render('profile.ejs',{posts: results, prof: profResult, recentPost, followStatus: true});
+                    return res.render('profile.ejs',{posts: results, prof: profResult, recentPost, followStatus: true});
                 } else {
-                    res.render('profile.ejs',{posts: results, prof: profResult, recentPost, followStatus: false});
+                    return res.render('profile.ejs',{posts: results, prof: profResult, recentPost, followStatus: false});
                 }
             } catch (error) {
             console.error(error);
-            res.status(500).send('Internal Server Error');
+            return res.status(500).send('Internal Server Error');
             }
         }
     } else {
         // res.render('login.ejs', {formErrors: [], loginError: false});
-        res.redirect('/login');
+        return res.redirect('/login');
     }
 });
 
@@ -199,7 +212,7 @@ app.get('/profeditor', authenticateUser, async (req, res) => {
 app.post('/profeditor', authenticateUser, async (req, res) => {
     const { userId, displayName, email, password, password2, introduction } = req.body;
     const errors = [];
-    // フォームのエラーチェック
+    // フォームの未入力チェック
     if (!userId) errors.push('※ユーザーIDは必須です');
     if (!displayName) errors.push('※表示名は必須です');
     if (!email) errors.push('※メールアドレスは必須です');
@@ -241,7 +254,7 @@ app.post('/profeditor', authenticateUser, async (req, res) => {
         }
     } catch (error) {
         console.error(error);
-        res.status(500).send('Internal Server Error');
+        return res.status(500).send('Internal Server Error');
     }
 });
 
@@ -270,7 +283,7 @@ app.post('/follow', authenticateUser, async (req, res) => {
         return res.redirect('/profile?userid='+result[0].userId);
     } catch (error) {
         console.error(error);
-        res.status(500).send('Internal Server Error');
+        return res.status(500).send('Internal Server Error');
     }
 });
 
@@ -297,16 +310,16 @@ app.post('/unfollow', authenticateUser, async (req, res) => {
         return res.redirect('/profile?userid='+result[0].userId);
     } catch (error) {
         console.error(error);
-        res.status(500).send('Internal Server Error');
+        return res.status(500).send('Internal Server Error');
     }
 });
 
 //投稿ページ
 app.get('/post', (req, res) => {
     if (req.session.acountNum === undefined){
-        res.redirect('/login');
+        return res.redirect('/login');
     } else {
-        res.render('post.ejs');
+        return res.render('post.ejs');
     }
 });
 
@@ -320,10 +333,10 @@ app.post('/createPost', async (req, res) => {
             `INSERT INTO post (acountNum, content, datetime) VALUES (?, ?, ?)`,
             [req.session.acountNum, req.body.content, postTime]
         );
-        res.redirect('/');
+        return res.redirect('/');
     } catch (error) {
         console.error(error);
-        res.status(500).send('Internal Server Error');
+        return res.status(500).send('Internal Server Error');
     }   
 });
 
@@ -337,21 +350,21 @@ app.post('/deletepost', authenticateUser, async (req, res) => {
             [postNum]
         );
         if (redirect === "index") {//クリック元ページ判定
-            res.redirect('/');
+            return res.redirect('/');
         } else if(redirect === "profile") {
-            res.redirect('/profile');
+            return res.redirect('/profile');
         } else {
-            res.redirect('/');
+            return res.redirect('/');
         }
     } catch (error) {
         console.error(error);
-        res.status(500).send('Internal Server Error');
+        return res.status(500).send('Internal Server Error');
     }
 });
 
 //アカウント新規登録ページ
 app.get('/signup', (req, res) => {
-    res.render('signup.ejs', {errors: []});
+    return res.render('signup.ejs', {errors: []});
 });
 
 //アカウント登録処理
@@ -386,7 +399,7 @@ app.post('/signup', async (req, res, next) => {
 
 //ログインページ
 app.get('/login', (req, res) => {
-        res.render('login.ejs', {formErrors: [], loginError: false});
+        return res.render('login.ejs', {formErrors: [], loginError: false});
 });
 
 //ログイン処理
@@ -402,7 +415,7 @@ app.post('/login', async (req, res) => {
         formErrors[1] = true;
     }
     if(formErrors.length > 0){
-        res.render('login.ejs', {formErrors: formErrors, loginError: loginError});
+        return res.render('login.ejs', {formErrors: formErrors, loginError: loginError});
     }else{
         try {
             const results = await queryDatabase(
@@ -414,16 +427,16 @@ app.post('/login', async (req, res) => {
             if (results.length > 0) {
                 if (req.body.password === results[0].password){
                     req.session.acountNum = results[0].acountNum;
-                    res.redirect('/');
+                    return res.redirect('/');
                 } else {
-                    res.render('login.ejs', {formErrors: formErrors, loginError: true});
+                    return res.render('login.ejs', {formErrors: formErrors, loginError: true});
                 }
             } else {
-                res.render('login.ejs', {formErrors: formErrors, loginError: true});
+                return res.render('login.ejs', {formErrors: formErrors, loginError: true});
             }
         } catch (error) {
             console.error(error);
-            res.status(500).send('Internal Server Error');
+            return res.status(500).send('Internal Server Error');
         }   
     }
 });
@@ -497,14 +510,14 @@ app.post('/goodcancel', authenticateUser, async (req, res) => {
 });
 
 app.get('/test', (req, res) => {
-    res.render('test.ejs');
+    return res.render('test.ejs');
 });
 
 //ログアウト
 app.get('/logout', (req, res) => {
     req.session.destroy((error)  => {
-        res.redirect('/');
+        return res.redirect('/');
     });
 });
 
-app.listen(3000);
+// app.listen(3000);
