@@ -3,8 +3,27 @@ const mysql = require('mysql');
 const session = require('express-session');
 const https = require('https');
 const fs = require('fs');
+const multer = require('multer');
+const path = require('path');
 const app = express();
 const { recentPost } = require('./recentpost');//投稿日時と現在の時刻の差分計算
+
+// プロフィール画像用アップロード設定
+const profileStorage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, path.join(__dirname, 'public/profimages')),
+    filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
+});
+const profileUpload = multer({ storage: profileStorage });
+
+// 文章投稿用画像アップロード設定
+const postStorage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, path.join(__dirname, 'public/postimages')),
+    filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
+});
+const postUpload = multer({ storage: postStorage });
+
+// 静的ファイルを提供
+app.use('/public', express.static(path.join(__dirname, 'public')));
 
 // 自己署名証明書の読み込み
 const options = {
@@ -90,6 +109,7 @@ app.get('/', async (req, res) => {
                 acount.acountNum AS acount_acountNum,
                 acount.userId AS acount_userId,
                 acount.displayName AS acount_displayName,
+                acount.profImage AS acount_profImage,
                 good.postNum AS good_postNum,
                 good.acountNum AS good_acountNum
                 FROM post 
@@ -209,8 +229,10 @@ app.get('/profeditor', authenticateUser, async (req, res) => {
 });
 
 //プロフィール編集処理
-app.post('/profeditor', authenticateUser, async (req, res) => {
-    const { userId, displayName, email, password, password2, introduction } = req.body;
+app.post('/profeditor', profileUpload.single('image'), authenticateUser, async (req, res) => {
+    const { defaultImage, userId, displayName, email, password, password2, introduction } = req.body;
+    const file = req.file;
+    const filename = req.file.filename;
     const errors = [];
     // フォームの未入力チェック
     if (!userId) errors.push('※ユーザーIDは必須です');
@@ -218,6 +240,12 @@ app.post('/profeditor', authenticateUser, async (req, res) => {
     if (!email) errors.push('※メールアドレスは必須です');
     if (!password) errors.push('※パスワードは必須です');
     if (password != password2) errors.push('※パスワードをもう一度入力してください');
+    if (!file) {
+        filename = defaultImage;
+        console.log(filename);
+    } else {
+        console.log(filename);
+    }
     
     try {
         //未入力項目がある場合もう再度編集ページへ
@@ -242,13 +270,14 @@ app.post('/profeditor', authenticateUser, async (req, res) => {
                 [req.session.acountNum]
             );
             return res.render('profeditor.ejs', {errors, acount: results, editData: introduction});
-        } else {
+        } else {//userId重複なし、すべてのチェックを終え、以下から更新処理に
             const results = await queryDatabase(
                 `UPDATE acount SET 
                 userId = ?, displayName = ?, email = ?,
-                password = ?, introduction = ?
+                password = ?, introduction = ?,
+                profImage = ?
                 WHERE acount.acountNum = ?;`,
-                [userId, displayName, email, password, introduction, req.session.acountNum]
+                [userId, displayName, email, password, introduction, filename, req.session.acountNum]
             );
             return res.redirect('/profile');
         }
