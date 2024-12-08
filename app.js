@@ -5,15 +5,36 @@ const https = require('https');
 const fs = require('fs');
 const multer = require('multer');
 const path = require('path');
+const crypto = require('crypto');
 const app = express();
 const { recentPost } = require('./recentpost');//投稿日時と現在の時刻の差分計算
 
 // プロフィール画像用アップロード設定
+//ファイル名をランダム化処理追加
 const profileStorage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, path.join(__dirname, 'public/profimages')),
-    filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
+    destination: (req, file, cb) => {
+        cb(null, path.join(__dirname, 'public/profimages'));
+    },
+    filename: (req, file, cb) => {
+        const randomName = crypto.randomBytes(16).toString('hex'); // ランダムな16進文字列
+        const ext = path.extname(file.originalname); // 拡張子を保持
+        cb(null, `${randomName}${ext}`);
+    }
 });
-const profileUpload = multer({ storage: profileStorage });
+
+//画像ファイルのみアップロード受け付け
+const fileFilter = (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (!allowedTypes.includes(file.mimetype)) {
+        return cb(new Error('Only images are allowed'), false);
+    }
+    cb(null, true);
+};
+
+const profileUpload = multer({ 
+    storage: profileStorage,
+    fileFilter,
+});
 
 // 文章投稿用画像アップロード設定
 const postStorage = multer.diskStorage({
