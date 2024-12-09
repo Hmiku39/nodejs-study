@@ -1,0 +1,103 @@
+<%- include('head'); %>
+<body>
+    <%- include('header'); %>
+    <div class="container">
+        <h1>フォロー中</h1>
+        <div class="row">
+            <div class="col-sm-3 mb-3 mb-sm-0 text-center">
+                <img src="public/profimages/<%= prof[0].profImage %>" class="h-auto img-fluid" style="width: 100px">
+            </div>
+            <div class="col-sm w-100">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <div class="row">
+                                <div class="col fs-3">
+                                    <%= prof[0].displayName %>
+                                </div>
+                                <div class="col text-end">
+                                    <% if (followStatus === false) { %>
+                                        <form action="/follow" method="POST">
+                                            <input type="hidden" name="followid" value="<%= prof[0].acountNum %>">
+                                            <button type="submit" class="btn btn-primary">フォローする</button>
+                                        </form>
+                                    <% } else if(followStatus === true) { %>
+                                        <div class="btn-group" role="group">
+                                            <form action="/unfollow" method="POST">
+                                                <input type="hidden" name="followid" value="<%= prof[0].acountNum %>">
+                                                <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    フォロー中
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li><button type="submit" class="dropdown-item">フォローを解除する</button></li>
+                                                </ul>
+                                            </form>
+                                        </div>
+                                    <% } else { %>
+                                        <a href="/profeditor" class="btn btn-secondary">プロフィールを編集</a>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </h5>
+                        <p class="text-body">
+                            @<%= prof[0].userId %>
+                        </p>
+                        <p class="card-text">
+                            <%= prof[0].introduction %>
+                        </p>
+                        <div class="row text-center">
+                            <div class="col">
+                                <a href="/follow?userid=<%= prof[0].userId %>" class="btn btn-secondary d-block ">フォロー</a>
+                            </div>
+                            <div class="col">
+                                <a href="/followers?userid=<%= prof[0].userId %>" class="btn btn-outline-secondary d-block ">フォロワー</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <% users.forEach((user) => { %>
+        <div class="card mb-3">
+            <div class="card-header fs-5">
+                <div class="row">
+                    <div class="col">
+                        <img src="public/profimages/<%= user.acount_profImage %>" class="h-auto img-fluid" style="width: 40px">
+                        @<a href="/profile?userid=<%= user.acount_userId %>" class="link-dark link-underline-opacity-75-hover link-underline link-underline-opacity-0"><%= user.acount_userId %></a>　<%= user.acount_displayName %>
+                    </div>
+                    <div class="col text-end">
+                        <% if(user.follow_followAcountNum === locals.acountNum) { %>
+                        <% } else if (user.followStatus === "notfollow") { %>
+                            <form action="/follow" method="POST">
+                                <input type="hidden" name="followid" value="<%= user.acount_acountNum %>">
+                                <button type="submit" class="btn btn-primary">フォローする</button>
+                            </form>
+                        <% } else if(user.followStatus === "following") { %>
+                            <div class="btn-group" role="group">
+                                <form action="/unfollow" method="POST">
+                                    <input type="hidden" name="followid" value="<%= user.acount_acountNum %>">
+                                    <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                        フォロー中
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><button type="submit" class="dropdown-item">フォローを解除する</button></li>
+                                    </ul>
+                                </form>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <p><%= user.acount_introduction 
+                    ? (user.acount_introduction.length > 100 
+                        ? user.acount_introduction.slice(0, 100) + "…" 
+                        : user.acount_introduction) 
+                    : "" %>
+                </p>
+            </div>
+            
+        </div>
+        <% }) %>
+    </div>
+<%- include('footer'); %>
