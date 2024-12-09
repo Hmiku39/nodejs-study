@@ -257,6 +257,182 @@ app.get('/profile', async (req, res) => {
     }
 });
 
+//フォロー中ユーザーの表示
+app.get('/follow', async (req, res) => {
+    const userId = req.query.userid;
+    if (res.locals.isLoggedIn === true){
+        const today = new Date();//現在の時刻と投稿時間との比較のため
+        // console.log(todayTime);
+        if (userId === undefined) {//ユーザーIDの指定がない場合自分のプロフィールページを表示
+            try {
+                const profResult = await queryDatabase(
+                    `SELECT * FROM acount WHERE acountNum = ?`,
+                    [req.session.acountNum]
+                );
+                const results = await queryDatabase(
+                    `SELECT     
+                    acount.acountNum AS acount_acountNum,
+                    acount.userId AS acount_userId,
+                    acount.displayName AS acount_displayName,
+                    acount.introduction AS acount_introduction,
+                    acount.profImage AS acount_profImage,
+                    follow.acountNum As follow_acountNum,
+                    follow.followAcountNum AS follow_followAcountNum
+                    FROM follow
+                    JOIN acount ON
+                    follow.followAcountNum = acount.acountNum 
+                    WHERE follow.acountNum = ?
+                    ORDER BY follow.followDate DESC`,
+                    [req.session.acountNum]
+                );
+                return res.render('follow.ejs',{users: results, prof: profResult, recentPost, followStatus: 'myprofile'});
+            } catch (error) {
+                console.error(error);
+                return res.status(500).send('Internal Server Error');
+            }
+
+        } else {//URLのユーザーIDのプロフィールページ表示
+            try {
+                const profResult = await queryDatabase(
+                `SELECT * FROM acount WHERE userId = ?`,
+                [userId]
+                );  
+                if (profResult[0].acountNum === req.session.acountNum){//自分のユーザーIDならQUERY無しURLにリダイレクト
+                    return res.redirect('/follow');
+                }
+                
+                const results = await queryDatabase(
+                    `SELECT     
+                    acount.acountNum AS acount_acountNum,
+                    acount.userId AS acount_userId,
+                    acount.displayName AS acount_displayName,
+                    acount.introduction AS acount_introduction,
+                    acount.profImage AS acount_profImage,
+                    follow.acountNum AS follow_acountNum,
+                    follow.followAcountNum AS follow_followAcountNum,
+                    CASE 
+                        WHEN EXISTS (
+                            SELECT 1 
+                            FROM follow AS f_check
+                            WHERE f_check.acountNum = ? AND f_check.followAcountNum = acount.acountNum
+                        ) THEN 'following'
+                        ELSE 'notfollow'
+                    END AS followStatus
+                    FROM follow
+                    JOIN acount ON
+                    follow.followAcountNum = acount.acountNum 
+                    WHERE follow.acountNum = (
+                    SELECT acountNum 
+                    FROM acount WHERE userId = ?)
+                    ORDER BY follow.followDate DESC`,
+                    [req.session.acountNum, userId]
+                );
+                //対象のアカウントをフォロー中かチェック
+                const followResult = await queryDatabase(
+                    `SELECT * FROM follow WHERE acountNum = ? AND followAcountNum = ?`,
+                    [req.session.acountNum, profResult[0].acountNum]
+                );
+
+                if (followResult.length > 0) {//一致するデータがなければまだフォローしていない
+                    return res.render('follow.ejs',{users: results, prof: profResult, recentPost, followStatus: true});
+                } else {
+                    return res.render('follow.ejs',{users: results, prof: profResult, recentPost, followStatus: false});
+                }
+            } catch (error) {
+            console.error(error);
+            return res.status(500).send('Internal Server Error');
+            }
+        }
+    } else {
+        // res.render('login.ejs', {formErrors: [], loginError: false});
+        return res.redirect('/login');
+    }
+});
+
+//フォロワーユーザの表示
+app.get('/followers', async (req, res) => {
+    const userId = req.query.userid;
+    if (res.locals.isLoggedIn === true){
+        const today = new Date();//現在の時刻と投稿時間との比較のため
+        // console.log(todayTime);
+        if (userId === undefined) {//ユーザーIDの指定がない場合自分のプロフィールページを表示
+            try {
+                const profResult = await queryDatabase(
+                    `SELECT * FROM acount WHERE acountNum = ?`,
+                    [req.session.acountNum]
+                );
+                const results = await queryDatabase(
+                    `SELECT post.postNum AS post_postNum,
+                    post.acountNum AS post_acountNum,
+                    post.content AS post_content,
+                    post.datetime AS post_datetime,
+                    post.good AS post_good,      
+                    acount.acountNum AS acount_acountNum,
+                    acount.userId AS acount_userId,
+                    acount.displayName AS acount_displayName,
+                    good.postNum AS good_postNum,
+                    good.acountNum AS good_acountNum
+                    FROM post 
+                    INNER JOIN acount ON acount.acountNum = ? AND post.acountNum = acount.acountNum AND deleteFlg = "0"
+                    LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
+                    ORDER BY post.datetime DESC`,
+                    [req.session.acountNum, req.session.acountNum]
+                );
+                return res.render('profile.ejs',{posts: results, prof: profResult, recentPost, followStatus: 'myprofile'});
+            } catch (error) {
+                console.error(error);
+                return res.status(500).send('Internal Server Error');
+            }
+
+        } else {//URLのユーザーIDのプロフィールページ表示
+            try {
+                const profResult = await queryDatabase(
+                `SELECT * FROM acount WHERE userId = ?`,
+                [userId]
+                );  
+                if (profResult[0].acountNum === req.session.acountNum){//自分のユーザーIDならQUERY無しURLにリダイレクト
+                    return res.redirect('/profile');
+                }
+                
+                const results = await queryDatabase(
+                    `SELECT post.postNum AS post_postNum,
+                    post.acountNum AS post_acountNum,
+                    post.content AS post_content,
+                    post.datetime AS post_datetime,
+                    post.good AS post_good,      
+                    acount.acountNum AS acount_acountNum,
+                    acount.userId AS acount_userId,
+                    acount.displayName AS acount_displayName,
+                    good.postNum AS good_postNum,
+                    good.acountNum AS good_acountNum
+                    FROM post 
+                    INNER JOIN acount ON acount.userId = ? AND post.acountNum = acount.acountNum AND deleteFlg = "0"
+                    LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
+                    ORDER BY post.datetime DESC`,
+                    [userId, req.session.acountNum]
+                );
+                //対象のアカウントをフォロー中かチェック
+                const followResult = await queryDatabase(
+                    `SELECT * FROM follow WHERE acountNum = ? AND followAcountNum = ?`,
+                    [req.session.acountNum, profResult[0].acountNum]
+                );
+
+                if (followResult.length > 0) {//一致するデータがなければまだフォローしていない
+                    return res.render('profile.ejs',{posts: results, prof: profResult, recentPost, followStatus: true});
+                } else {
+                    return res.render('profile.ejs',{posts: results, prof: profResult, recentPost, followStatus: false});
+                }
+            } catch (error) {
+            console.error(error);
+            return res.status(500).send('Internal Server Error');
+            }
+        }
+    } else {
+        // res.render('login.ejs', {formErrors: [], loginError: false});
+        return res.redirect('/login');
+    }
+});
+
 //プロフィール編集ページ
 app.get('/profeditor', authenticateUser, async (req, res) => {
     if (req.session.acountNum != undefined){
