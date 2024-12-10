@@ -460,7 +460,7 @@ app.get('/profeditor', authenticateUser, async (req, res) => {
 app.post('/profeditor', profileUpload.single('image'), authenticateUser, async (req, res) => {
     const { defaultImage, userId, displayName, email, password, password2, introduction } = req.body;
     const file = req.file;
-    const filename = req.file.filename;
+    let filename = defaultImage;
     const errors = [];
     // フォームの未入力チェック
     if (!userId) errors.push('※ユーザーIDは必須です');
@@ -472,6 +472,7 @@ app.post('/profeditor', profileUpload.single('image'), authenticateUser, async (
         filename = defaultImage;
         console.log(filename);
     } else {
+        filename = req.file.filename;
         console.log(filename);
     }
     
