@@ -2,7 +2,11 @@
 <body>
     <%- include('header'); %>
     <div class="container">
+        <% if (whichpage === 'follow') { %>
         <h1>フォロー中</h1>
+        <% } else if(whichpage === 'followers') { %>
+        <h1>フォロワー</h1>
+        <% } %>
         <div class="row">
             <div class="col-sm-3 mb-3 mb-sm-0 text-center">
                 <img src="public/profimages/<%= prof[0].profImage %>" class="h-auto img-fluid" style="width: 100px">
@@ -46,12 +50,21 @@
                             <%= prof[0].introduction %>
                         </p>
                         <div class="row text-center">
+                            <% if (whichpage === 'follow') { %>
                             <div class="col">
                                 <a href="/follow?userid=<%= prof[0].userId %>" class="btn btn-secondary d-block ">フォロー</a>
                             </div>
                             <div class="col">
                                 <a href="/followers?userid=<%= prof[0].userId %>" class="btn btn-outline-secondary d-block ">フォロワー</a>
                             </div>
+                            <% } else if(whichpage === 'followers') { %>
+                            <div class="col">
+                                <a href="/follow?userid=<%= prof[0].userId %>" class="btn btn-outline-secondary d-block ">フォロー</a>
+                            </div>
+                            <div class="col">
+                                <a href="/followers?userid=<%= prof[0].userId %>" class="btn btn-secondary d-block ">フォロワー</a>
+                            </div>
+                            <% } %>
                         </div>
                     </div>
                 </div>
@@ -61,11 +74,11 @@
         <div class="card mb-3">
             <div class="card-header fs-5">
                 <div class="row">
-                    <div class="col">
+                    <div class="col-sm-9">
                         <img src="public/profimages/<%= user.acount_profImage %>" class="h-auto img-fluid" style="width: 40px">
                         @<a href="/profile?userid=<%= user.acount_userId %>" class="link-dark link-underline-opacity-75-hover link-underline link-underline-opacity-0"><%= user.acount_userId %></a>　<%= user.acount_displayName %>
                     </div>
-                    <div class="col text-end">
+                    <div class="col-sm-3 text-end">
                         <% if(user.follow_followAcountNum === locals.acountNum) { %>
                         <% } else if (user.followStatus === "notfollow") { %>
                             <form action="/follow" method="POST">

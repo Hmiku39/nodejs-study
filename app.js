@@ -285,7 +285,7 @@ app.get('/follow', async (req, res) => {
                     ORDER BY follow.followDate DESC`,
                     [req.session.acountNum]
                 );
-                return res.render('follow.ejs',{users: results, prof: profResult, recentPost, followStatus: 'myprofile'});
+                return res.render('follow.ejs',{users: results, prof: profResult, recentPost, followStatus: 'myprofile', whichpage: 'follow'});
             } catch (error) {
                 console.error(error);
                 return res.status(500).send('Internal Server Error');
@@ -334,9 +334,9 @@ app.get('/follow', async (req, res) => {
                 );
 
                 if (followResult.length > 0) {//一致するデータがなければまだフォローしていない
-                    return res.render('follow.ejs',{users: results, prof: profResult, recentPost, followStatus: true});
+                    return res.render('follow.ejs',{users: results, prof: profResult, recentPost, followStatus: true, whichpage: 'follow'});
                 } else {
-                    return res.render('follow.ejs',{users: results, prof: profResult, recentPost, followStatus: false});
+                    return res.render('follow.ejs',{users: results, prof: profResult, recentPost, followStatus: false, whichpage: 'follow'});
                 }
             } catch (error) {
             console.error(error);
@@ -362,23 +362,22 @@ app.get('/followers', async (req, res) => {
                     [req.session.acountNum]
                 );
                 const results = await queryDatabase(
-                    `SELECT post.postNum AS post_postNum,
-                    post.acountNum AS post_acountNum,
-                    post.content AS post_content,
-                    post.datetime AS post_datetime,
-                    post.good AS post_good,      
+                    `SELECT     
                     acount.acountNum AS acount_acountNum,
                     acount.userId AS acount_userId,
                     acount.displayName AS acount_displayName,
-                    good.postNum AS good_postNum,
-                    good.acountNum AS good_acountNum
-                    FROM post 
-                    INNER JOIN acount ON acount.acountNum = ? AND post.acountNum = acount.acountNum AND deleteFlg = "0"
-                    LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
-                    ORDER BY post.datetime DESC`,
-                    [req.session.acountNum, req.session.acountNum]
+                    acount.introduction AS acount_introduction,
+                    acount.profImage AS acount_profImage,
+                    follow.acountNum As follow_acountNum,
+                    follow.followAcountNum AS follow_followAcountNum
+                    FROM follow
+                    JOIN acount ON
+                    follow.acountNum = acount.acountNum 
+                    WHERE follow.followAcountNum = ?
+                    ORDER BY follow.followDate DESC`,
+                    [req.session.acountNum]
                 );
-                return res.render('profile.ejs',{posts: results, prof: profResult, recentPost, followStatus: 'myprofile'});
+                return res.render('follow.ejs',{users: results, prof: profResult, recentPost, followStatus: 'myprofile', whichpage: 'followers'});
             } catch (error) {
                 console.error(error);
                 return res.status(500).send('Internal Server Error');
@@ -391,25 +390,34 @@ app.get('/followers', async (req, res) => {
                 [userId]
                 );  
                 if (profResult[0].acountNum === req.session.acountNum){//自分のユーザーIDならQUERY無しURLにリダイレクト
-                    return res.redirect('/profile');
+                    return res.redirect('/followers');
                 }
                 
                 const results = await queryDatabase(
-                    `SELECT post.postNum AS post_postNum,
-                    post.acountNum AS post_acountNum,
-                    post.content AS post_content,
-                    post.datetime AS post_datetime,
-                    post.good AS post_good,      
+                    `SELECT     
                     acount.acountNum AS acount_acountNum,
                     acount.userId AS acount_userId,
                     acount.displayName AS acount_displayName,
-                    good.postNum AS good_postNum,
-                    good.acountNum AS good_acountNum
-                    FROM post 
-                    INNER JOIN acount ON acount.userId = ? AND post.acountNum = acount.acountNum AND deleteFlg = "0"
-                    LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
-                    ORDER BY post.datetime DESC`,
-                    [userId, req.session.acountNum]
+                    acount.introduction AS acount_introduction,
+                    acount.profImage AS acount_profImage,
+                    follow.acountNum AS follow_acountNum,
+                    follow.followAcountNum AS follow_followAcountNum,
+                    CASE 
+                        WHEN EXISTS (
+                            SELECT 1 
+                            FROM follow AS f_check
+                            WHERE f_check.acountNum = ? AND f_check.followAcountNum = acount.acountNum
+                        ) THEN 'following'
+                        ELSE 'notfollow'
+                    END AS followStatus
+                    FROM follow
+                    JOIN acount ON
+                    follow.followAcountNum = acount.acountNum 
+                    WHERE follow.acountNum = (
+                    SELECT acountNum 
+                    FROM acount WHERE userId = ?)
+                    ORDER BY follow.followDate DESC`,
+                    [req.session.acountNum, userId]
                 );
                 //対象のアカウントをフォロー中かチェック
                 const followResult = await queryDatabase(
@@ -418,9 +426,9 @@ app.get('/followers', async (req, res) => {
                 );
 
                 if (followResult.length > 0) {//一致するデータがなければまだフォローしていない
-                    return res.render('profile.ejs',{posts: results, prof: profResult, recentPost, followStatus: true});
+                    return res.render('follow.ejs',{users: results, prof: profResult, recentPost, followStatus: true, whichpage: 'followers'});
                 } else {
-                    return res.render('profile.ejs',{posts: results, prof: profResult, recentPost, followStatus: false});
+                    return res.render('follow.ejs',{users: results, prof: profResult, recentPost, followStatus: false, whichpage: 'followers'});
                 }
             } catch (error) {
             console.error(error);
