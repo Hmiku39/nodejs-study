@@ -412,8 +412,8 @@ app.get('/followers', async (req, res) => {
                     END AS followStatus
                     FROM follow
                     JOIN acount ON
-                    follow.followAcountNum = acount.acountNum 
-                    WHERE follow.acountNum = (
+                    follow.acountNum = acount.acountNum 
+                    WHERE follow.followAcountNum = (
                     SELECT acountNum 
                     FROM acount WHERE userId = ?)
                     ORDER BY follow.followDate DESC`,
