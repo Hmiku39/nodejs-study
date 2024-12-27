@@ -767,6 +767,45 @@ app.post('/goodcancel', authenticateUser, async (req, res) => {
     }
 });
 
+//検索ページ
+app.get('/search', async (req, res) => {
+
+    if (res.locals.isLoggedIn === true){
+        const today = new Date();//現在の時刻と投稿時間との比較のため
+        try {
+            const results = await queryDatabase(//自身の投稿とフォロー済みユーザーの投稿内容を表示
+                `SELECT post.postNum AS post_postNum,
+                post.acountNum AS post_acountNum,
+                post.content AS post_content,
+                post.datetime AS post_datetime,
+                post.good AS post_good,      
+                acount.acountNum AS acount_acountNum,
+                acount.userId AS acount_userId,
+                acount.displayName AS acount_displayName,
+                acount.profImage AS acount_profImage,
+                good.postNum AS good_postNum,
+                good.acountNum AS good_acountNum,
+                follow.acountNum AS follow_acountNum,
+                follow.followAcountNum AS follow_followAcountNum
+                FROM post
+                JOIN acount ON post.acountNum = acount.acountNum
+                LEFT JOIN follow ON follow.followAcountNum = post.acountNum AND follow.acountNum = ?
+                LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
+                WHERE  (post.acountNum = ? OR follow.acountNum = ?) AND post.deleteFlg = 0
+                ORDER BY post.datetime DESC`,
+                [req.session.acountNum, req.session.acountNum, req.session.acountNum, req.session.acountNum]
+            );
+            return res.render('index.ejs',{posts: results, recentPost});
+        } catch (error) {
+            console.error(error);
+            return res.status(500).send('Internal Server Error');
+        }
+    } else {
+        // res.render('login.ejs', {formErrors: [], loginError: false});
+        return res.redirect('/login');
+    }
+});
+
 app.get('/test', (req, res) => {
     return res.render('test.ejs');
 });
