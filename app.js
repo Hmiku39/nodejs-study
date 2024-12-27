@@ -67,7 +67,7 @@ app.use(express.urlencoded({extended: false}));
 
 // MYSQL接続情報をプールに変更
 const pool = mysql.createPool({
-    host: '192.168.100.25',
+    host: '192.168.10.6',
     user: 'test',
     password: 'test',
     database: 'web_app',
