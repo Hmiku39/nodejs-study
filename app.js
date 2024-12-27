@@ -795,7 +795,7 @@ app.get('/search', async (req, res) => {
                 ORDER BY post.datetime DESC`,
                 [req.session.acountNum, req.session.acountNum, req.session.acountNum, req.session.acountNum]
             );
-            return res.render('index.ejs',{posts: results, recentPost});
+            return res.render('search.ejs',{posts: results, recentPost});
         } catch (error) {
             console.error(error);
             return res.status(500).send('Internal Server Error');
