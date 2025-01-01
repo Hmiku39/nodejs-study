@@ -776,7 +776,7 @@ app.get('/search', async (req, res) => {
         if (keyword === undefined) {//検索キーワードが空白のとき
             try {
                 const results = [];
-                return res.render('search.ejs', {posts: results, recentPost, keyword: ""});
+                return res.render('search.ejs', {posts: results, recentPost, keyword: "", dataLength: ""});
             } catch (error) {
                 console.error(error);
                 return res.status(500).send('Internal Server Error');
@@ -803,7 +803,10 @@ app.get('/search', async (req, res) => {
                     ORDER BY post.datetime DESC`,
                     [req.session.acountNum, keyword]
                 );
-                return res.render('search.ejs', {posts: results, recentPost, keyword: keyword});
+                const dataLength = results.length;
+                // console.log(dataLength);
+                //ポスト内容、検索キーワード、検索ヒット数を送ります。
+                return res.render('search.ejs', {posts: results, recentPost, keyword: keyword, dataLength: dataLength});
             } catch (error) {
             console.error(error);
             return res.status(500).send('Internal Server Error');
