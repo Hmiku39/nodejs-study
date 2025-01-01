@@ -3,18 +3,25 @@
     <%- include('header'); %>
     <div class="container">
         <h1>検索</h1>
-a
+
         <form action="/search" method="get">
             <div class="row mb-3">
                 <div class="col-10">
-                    <input type="text" name="keyword" value="<%= keyword %>"class="col-auto form-control">
+                    <input type="text" name="keyword" placeholder="検索" value="<%= keyword %>"class="col-auto form-control">
                 </div>
                 <div class="col-2">
                     <button type="submit" class="col-auto btn btn-primary">検索</button>
                 </div>
             </div>
         </form>
-
+        <% if (keyword != "") { 
+            if (dataLength === 0) { %>
+                <h4>該当する投稿は見つかりませんでした。</h4>
+            <% } else { %>
+                <h4><%= dataLength %>件の投稿が見つかりました。</h4>
+        <% } 
+        }%>
+        
         <% posts.forEach((post) => { %>
         <div class="card mb-3">
             <div class="card-header fs-5">
