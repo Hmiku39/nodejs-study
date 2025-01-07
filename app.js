@@ -818,6 +818,52 @@ app.get('/search', async (req, res) => {
     }
 });
 
+//ポスト内容詳細ページ
+app.get('/detail', async (req, res) => {
+    const postNum = req.query.postid;
+    if (res.locals.isLoggedIn === true) {
+        if (postNum === undefined) {//ポスト番号（postid）が空のときトップページに飛ばす
+            try {
+                const results = [];
+                return res.redirect('/');
+            } catch (error) {
+                console.error(error);
+                return res.status(500).send('Internal Server Error');
+            }
+        } else {
+            try {
+                const results = await queryDatabase(
+                    `SELECT post.postNum AS post_postNum,
+                    post.acountNum AS post_acountNum,
+                    post.content AS post_content,
+                    post.datetime AS post_datetime,
+                    post.good AS post_good,      
+                    acount.acountNum AS acount_acountNum,
+                    acount.userId AS acount_userId,
+                    acount.displayName AS acount_displayName,
+                    acount.profImage AS acount_profImage,
+                    good.postNum AS good_postNum,
+                    good.acountNum AS good_acountNum
+                    FROM post
+                    INNER JOIN acount ON post.acountNum = acount.acountNum AND post.deleteFlg = "0"
+                    LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
+                    WHERE post.postNum = ?
+                    ORDER BY post.datetime DESC`,
+                    [req.session.acountNum, postNum]
+                );
+                // console.log(dataLength);
+                //ポスト内容、検索キーワード、検索ヒット数を送ります。
+                return res.render('detail.ejs', {posts: results, recentPost});
+            } catch (error) {
+            console.error(error);
+            return res.status(500).send('Internal Server Error');
+            }
+        }
+    } else {
+        return res.redirect('/login');
+    }
+});
+
 app.get('/test', (req, res) => {
     return res.render('test.ejs');
 });
