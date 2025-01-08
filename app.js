@@ -851,9 +851,10 @@ app.get('/detail', async (req, res) => {
                     ORDER BY post.datetime DESC`,
                     [req.session.acountNum, postNum]
                 );
+                const dataLength = results.length;
                 // console.log(dataLength);
                 //ポスト内容、検索キーワード、検索ヒット数を送ります。
-                return res.render('detail.ejs', {posts: results, recentPost});
+                return res.render('detail.ejs', {post: results, recentPost, postid: postNum, dataLength: dataLength});
             } catch (error) {
             console.error(error);
             return res.status(500).send('Internal Server Error');
