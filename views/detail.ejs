@@ -24,7 +24,7 @@
                         <div class="col">
                             <% if (post[0].good_postNum != undefined) { %>
                                 <form action="/goodcancel" method="POST">
-                                    <input type="hidden" name="postNum" value="<%= post.post_postNum %>">
+                                    <input type="hidden" name="postNum" value="<%= post[0].post_postNum %>">
                                     <input type="hidden" name="redirect" value="index">
                                     <button type="submit" class="btn btn-secondary">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-hand-thumbs-up" viewBox="0 0 16 16">
@@ -35,7 +35,7 @@
                                 </form>
                             <% } else { %>
                                 <form action="/good" method="POST">
-                                    <input type="hidden" name="postNum" value="<%= post.post_postNum %>">
+                                    <input type="hidden" name="postNum" value="<%= post[0].post_postNum %>">
                                     <input type="hidden" name="redirect" value="index">
                                     <button type="submit" class="btn btn-outline-secondary">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-hand-thumbs-up" viewBox="0 0 16 16">
