@@ -854,7 +854,13 @@ app.get('/detail', async (req, res) => {
                 const dataLength = results.length;
                 // console.log(dataLength);
                 //ポスト内容、検索キーワード、検索ヒット数を送ります。
-                return res.render('detail.ejs', {post: results, recentPost, postid: postNum, dataLength: dataLength});
+                if (dataLength > 0) {
+                    return res.render('detail.ejs', {post: results, recentPost, postid: postNum, dataLength: dataLength});
+                } else {
+                    //404ポストが見つからない場合にNotfoundページに飛ばす
+                    return res.render('error.ejs', {post: results, recentPost, postid: postNum, dataLength: dataLength});
+                }
+                
             } catch (error) {
             console.error(error);
             return res.status(500).send('Internal Server Error');
