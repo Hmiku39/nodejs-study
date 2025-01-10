@@ -7,8 +7,8 @@
                 <div class="card-header fs-5">
                     <div class="row">
                         <div class="col">
-                            <img src="public/profimages/<%= post.acount_profImage %>" class="h-auto img-fluid" style="width: 40px">
-                            <a href="/profile?userid=<%= post.acount_userId %>" class="link-dark link-underline-opacity-75-hover link-underline link-underline-opacity-0">@<%= post[0].acount_userId %></a>　<%= post.acount_displayName %>
+                            <img src="public/profimages/<%= post[0].acount_profImage %>" class="h-auto img-fluid" style="width: 40px">
+                            <a href="/profile?userid=<%= post[0].acount_userId %>" class="link-dark link-underline-opacity-75-hover link-underline link-underline-opacity-0">@<%= post[0].acount_userId %></a>　<%= post.acount_displayName %>
                         </div>
                     </div>
                 </div>
