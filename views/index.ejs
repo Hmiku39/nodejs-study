@@ -78,6 +78,7 @@
                                             </div>
                                             <label for="message-text" class="col-form-label">@<%= post.acount_userId %>さんに返事</label>
                                             <textarea class="form-control" name="content" id="message-text"></textarea>
+                                            <input type="hidden" name="postNum" value="<%= post.post_postNum %>">
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
