@@ -832,7 +832,7 @@ app.get('/detail', async (req, res) => {
             }
         } else {
             try {
-                const results = await queryDatabase(
+                const post_results = await queryDatabase(
                     `SELECT post.postNum AS post_postNum,
                     post.acountNum AS post_acountNum,
                     post.content AS post_content,
@@ -851,14 +851,35 @@ app.get('/detail', async (req, res) => {
                     ORDER BY post.datetime DESC`,
                     [req.session.acountNum, postNum]
                 );
-                const dataLength = results.length;
+                const dataLength = post_results.length;
+
+                const reply_results = await queryDatabase(//フォロー関係無しに全投稿内容を表示
+                    `SELECT post.postNum AS post_postNum,
+                    post.acountNum AS post_acountNum,
+                    post.content AS post_content,
+                    post.datetime AS post_datetime,
+                    post.good AS post_good,      
+                    acount.acountNum AS acount_acountNum,
+                    acount.userId AS acount_userId,
+                    acount.displayName AS acount_displayName,
+                    acount.profImage AS acount_profImage,
+                    good.postNum AS good_postNum,
+                    good.acountNum AS good_acountNum
+                    FROM post 
+                    INNER JOIN acount ON post.acountNum = acount.acountNum AND deleteFlg = "0"
+                    LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
+                    WHERE post.replyNum = ?
+                    ORDER BY datetime DESC`,
+                    [req.session.acountNum, postNum]
+                );
+                
                 // console.log(dataLength);
                 //ポスト内容、検索キーワード、検索ヒット数を送ります。
                 if (dataLength > 0) {
-                    return res.render('detail.ejs', {post: results, recentPost, postid: postNum, dataLength: dataLength});
+                    return res.render('detail.ejs', {post: post_results, replys: reply_results, recentPost, postid: postNum, dataLength: dataLength});
                 } else {
                     //404ポストが見つからない場合にNotfoundページに飛ばす
-                    return res.render('error.ejs', {post: results, recentPost, postid: postNum, dataLength: dataLength});
+                    return res.render('error.ejs');
                 }
                 
             } catch (error) {
