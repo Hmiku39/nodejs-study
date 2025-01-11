@@ -54,11 +54,40 @@
                         <% } %>
                     </div>
                     <div class="col">
-                        <a href="#" class="btn btn-outline-secondary">
+                        <!-- reply modal button -->
+                        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#exampleModal">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-reply" viewBox="0 0 16 16">
                                 <path d="M6.598 5.013a.144.144 0 0 1 .202.134V6.3a.5.5 0 0 0 .5.5c.667 0 2.013.005 3.3.822.984.624 1.99 1.76 2.595 3.876-1.02-.983-2.185-1.516-3.205-1.799a8.7 8.7 0 0 0-1.921-.306 7 7 0 0 0-.798.008h-.013l-.005.001h-.001L7.3 9.9l-.05-.498a.5.5 0 0 0-.45.498v1.153c0 .108-.11.176-.202.134L2.614 8.254l-.042-.028a.147.147 0 0 1 0-.252l.042-.028zM7.8 10.386q.103 0 .223.006c.434.02 1.034.086 1.7.271 1.326.368 2.896 1.202 3.94 3.08a.5.5 0 0 0 .933-.305c-.464-3.71-1.886-5.662-3.46-6.66-1.245-.79-2.527-.942-3.336-.971v-.66a1.144 1.144 0 0 0-1.767-.96l-3.994 2.94a1.147 1.147 0 0 0 0 1.946l3.994 2.94a1.144 1.144 0 0 0 1.767-.96z"/>
                             </svg>
-                        </a>
+                        </button>
+                        <!-- modal content start -->
+                        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <form action="/reply" method="POST">
+                                        <div class="modal-header">
+                                            <h3 class="modal-title fs-5" id="exampleModalLabel">
+                                                <img src="public/profimages/<%= post.acount_profImage %>" class="h-auto img-fluid" style="width: 35px">
+                                                <a href="/profile?userid=<%= post.acount_userId %>" class="link-dark link-underline-opacity-75-hover link-underline link-underline-opacity-0">@<%= post.acount_userId %></a>　<%= post.acount_displayName %>
+                                            </h3>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="mb-4">
+                                                <%= post.post_content %>
+                                            </div>
+                                            <label for="message-text" class="col-form-label">@<%= post.acount_userId %>さんに返事</label>
+                                            <textarea class="form-control" name="content" id="message-text"></textarea>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                                            <button type="submit" class="btn btn-primary">返事する</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- modal content finish -->
                     </div>
                     <div class="col">
                         <a href="#" class="btn btn-outline-secondary">
