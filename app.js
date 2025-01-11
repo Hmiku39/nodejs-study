@@ -871,6 +871,23 @@ app.get('/detail', async (req, res) => {
     }
 });
 
+//リプライ投稿処理
+app.post('/reply', async (req, res) => {
+    const date = new Date();
+    const postTime = date.toFormat('YYYYMMDDHH24MISS');//投稿日時取得
+    console.log(postTime);
+    try {
+        const results = await queryDatabase(
+            `INSERT INTO post (acountNum, content, datetime, replyNum) VALUES (?, ?, ?, ?)`,
+            [req.session.acountNum, req.body.content, postTime, req.body.postNum]
+        );
+        return res.redirect('/');
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send('Internal Server Error');
+    }   
+});
+
 app.get('/test', (req, res) => {
     return res.render('test.ejs');
 });
