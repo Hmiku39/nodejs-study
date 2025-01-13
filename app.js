@@ -121,25 +121,6 @@ app.get('/', async (req, res) => {
     if (res.locals.isLoggedIn === true){
         const today = new Date();//現在の時刻と投稿時間との比較のため
         try {
-
-            // const results = await queryDatabase(//フォロー関係無しに全投稿内容を表示
-            //     `SELECT post.postNum AS post_postNum,
-            //     post.acountNum AS post_acountNum,
-            //     post.content AS post_content,
-            //     post.datetime AS post_datetime,
-            //     post.good AS post_good,      
-            //     acount.acountNum AS acount_acountNum,
-            //     acount.userId AS acount_userId,
-            //     acount.displayName AS acount_displayName,
-            //     acount.profImage AS acount_profImage,
-            //     good.postNum AS good_postNum,
-            //     good.acountNum AS good_acountNum
-            //     FROM post 
-            //     INNER JOIN acount ON post.acountNum = acount.acountNum AND deleteFlg = "0"
-            //     LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
-            //     ORDER BY datetime DESC`,
-            //     [req.session.acountNum]
-            // );
             const results = await queryDatabase(//自身の投稿とフォロー済みユーザーの投稿内容を表示
                 `SELECT post.postNum AS post_postNum,
                 post.acountNum AS post_acountNum,
@@ -168,7 +149,6 @@ app.get('/', async (req, res) => {
             return res.status(500).send('Internal Server Error');
         }
     } else {
-        // res.render('login.ejs', {formErrors: [], loginError: false});
         return res.redirect('/login');
     }
 });
