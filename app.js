@@ -174,6 +174,7 @@ app.get('/profile', async (req, res) => {
                     acount.acountNum AS acount_acountNum,
                     acount.userId AS acount_userId,
                     acount.displayName AS acount_displayName,
+                    acount.profImage AS acount_profImage,
                     good.postNum AS good_postNum,
                     good.acountNum AS good_acountNum
                     FROM post 
@@ -207,6 +208,7 @@ app.get('/profile', async (req, res) => {
                     acount.acountNum AS acount_acountNum,
                     acount.userId AS acount_userId,
                     acount.displayName AS acount_displayName,
+                    acount.profImage AS acount_profImage,
                     good.postNum AS good_postNum,
                     good.acountNum AS good_acountNum
                     FROM post 
