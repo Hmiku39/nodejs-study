@@ -806,7 +806,6 @@ app.get('/detail', async (req, res) => {
     if (res.locals.isLoggedIn === true) {
         if (postNum === undefined) {//ポスト番号（postid）が空のときトップページに飛ばす
             try {
-                const results = [];
                 return res.redirect('/');
             } catch (error) {
                 console.error(error);
