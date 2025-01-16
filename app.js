@@ -813,7 +813,7 @@ app.get('/detail', async (req, res) => {
             }
         } else {
             try {
-                const post_results = await queryDatabase(
+                const detail_results = await queryDatabase(
                     `SELECT post.postNum AS post_postNum,
                     post.acountNum AS post_acountNum,
                     post.content AS post_content,
@@ -832,7 +832,7 @@ app.get('/detail', async (req, res) => {
                     ORDER BY post.datetime DESC`,
                     [req.session.acountNum, postNum]
                 );
-                const dataLength = post_results.length;
+                const dataLength = detail_results.length;
 
                 const reply_results = await queryDatabase(//フォロー関係無しに全投稿内容を表示
                     `SELECT post.postNum AS post_postNum,
@@ -857,7 +857,7 @@ app.get('/detail', async (req, res) => {
                 // console.log(dataLength);
                 //ポスト内容、検索キーワード、検索ヒット数を送ります。
                 if (dataLength > 0) {
-                    return res.render('detail.ejs', {post: post_results, replys: reply_results, recentPost, postid: postNum, dataLength: dataLength});
+                    return res.render('detail.ejs', {detail: detail_results, posts: reply_results, recentPost, postid: postNum, dataLength: dataLength});
                 } else {
                     //404ポストが見つからない場合にNotfoundページに飛ばす
                     return res.render('error.ejs');
