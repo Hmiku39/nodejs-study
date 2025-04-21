@@ -877,12 +877,22 @@ app.get('/detail', async (req, res) => {
 //リプライ投稿処理
 app.post('/reply', async (req, res) => {
     const date = new Date();
+    const postNum = req.body.postNum;
+    const content = req.body.content;
     const postTime = date.toFormat('YYYYMMDDHH24MISS');//投稿日時取得
     console.log(postTime);
     try {
         const results = await queryDatabase(
             `INSERT INTO post (acountNum, content, datetime, replyNum) VALUES (?, ?, ?, ?)`,
-            [req.session.acountNum, req.body.content, postTime, req.body.postNum]
+            [req.session.acountNum, content, postTime, postNum]
+        );
+        const replyPlusResult = await queryDatabase(
+            `UPDATE post SET replyCount = replyCount + 1 WHERE post.postNum = ?;`,
+            [postNum]
+        );
+        const replyInsert = await queryDatabase(
+            `INSERT INTO reply (acountNum, postNum, replyDate) VALUES (?, ?, ?)`,
+            [req.session.acountNum, postNum, postTime]
         );
         return res.redirect('/');
     } catch (error) {
