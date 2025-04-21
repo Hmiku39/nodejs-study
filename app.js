@@ -135,14 +135,17 @@ app.get('/', async (req, res) => {
                 good.postNum AS good_postNum,
                 good.acountNum AS good_acountNum,
                 follow.acountNum AS follow_acountNum,
-                follow.followAcountNum AS follow_followAcountNum
+                follow.followAcountNum AS follow_followAcountNum,
+                reply.acountNum AS reply_acountNum,
+                reply.postNum AS reply_postNum
                 FROM post
                 JOIN acount ON post.acountNum = acount.acountNum
                 LEFT JOIN follow ON follow.followAcountNum = post.acountNum AND follow.acountNum = ?
                 LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
+                LEFT OUTER JOIN reply ON reply.acountNum = ? AND post.postNum = reply.postNum
                 WHERE  (post.acountNum = ? OR follow.acountNum = ?) AND post.deleteFlg = 0 AND post.replyNum IS NULL
                 ORDER BY post.datetime DESC`,
-                [req.session.acountNum, req.session.acountNum, req.session.acountNum, req.session.acountNum]
+                [req.session.acountNum, req.session.acountNum, req.session.acountNum, req.session.acountNum, req.session.acountNum]
             );
             return res.render('index.ejs',{posts: results, recentPost});
         } catch (error) {
