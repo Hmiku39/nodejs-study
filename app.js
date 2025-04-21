@@ -142,7 +142,12 @@ app.get('/', async (req, res) => {
                 JOIN acount ON post.acountNum = acount.acountNum
                 LEFT JOIN follow ON follow.followAcountNum = post.acountNum AND follow.acountNum = ?
                 LEFT OUTER JOIN good ON good.acountNum = ? AND post.postNum = good.postNum
-                LEFT OUTER JOIN reply ON reply.acountNum = ? AND post.postNum = reply.postNum
+                LEFT JOIN (
+                    SELECT MIN(postNum) AS postNum, acountNum
+                    FROM reply
+                    WHERE acountNum = 1
+                    GROUP BY postNum, acountNum
+                ) AS reply ON reply.postNum = post.postNum
                 WHERE  (post.acountNum = ? OR follow.acountNum = ?) AND post.deleteFlg = 0 AND post.replyNum IS NULL
                 ORDER BY post.datetime DESC`,
                 [req.session.acountNum, req.session.acountNum, req.session.acountNum, req.session.acountNum, req.session.acountNum]
