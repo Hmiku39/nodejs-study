@@ -71,6 +71,7 @@ const pool = mysql.createPool({
     user: 'test',
     password: 'test',
     database: 'web_app',
+    charset: 'utf8mb4',
     connectionLimit: 10, // プール内の最大接続数
 });
 // プールを使ったクエリ関数の作成
