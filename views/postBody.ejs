@@ -10,7 +10,7 @@
         </div>
         <a href="detail?postid=<%= post.post_postNum %>" class="text-black link-underline link-underline-opacity-0">
             <div class="card-body">
-                <p><%= post.post_content %></p>
+                <p><%- format(post.post_content) %></p>
             </div>
         </a>
         <div class="card-footer fs-6">
@@ -85,7 +85,8 @@
                                     </div>
                                     <div class="modal-body">
                                         <div class="mb-4">
-                                            <%= post.post_content %>
+                                            <%- format(post.post_content) %>
+
                                         </div>
                                         <label for="message-text" class="col-form-label">@<%= post.acount_userId %>さんに返事</label>
                                         <textarea class="form-control" name="content" id="message-text"></textarea>
