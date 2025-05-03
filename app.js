@@ -9,6 +9,9 @@ const crypto = require('crypto');
 const app = express();
 const { recentPost } = require('./recentpost');//投稿日時と現在の時刻の差分計算
 const { pool, queryDatabase } = require('./db');//MYSQL接続情報参照
+const { format } = require('./format');//HTMLコードエスケープ用
+app.locals.format = format;//HTMLコードエスケープ用
+
 
 // プロフィール画像用アップロード設定
 //ファイル名をランダム化処理追加
