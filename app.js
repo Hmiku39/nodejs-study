@@ -8,6 +8,7 @@ const path = require('path');
 const crypto = require('crypto');
 const app = express();
 const { recentPost } = require('./recentpost');//投稿日時と現在の時刻の差分計算
+const { pool, queryDatabase } = require('./db');//MYSQL接続情報参照
 
 // プロフィール画像用アップロード設定
 //ファイル名をランダム化処理追加
@@ -65,26 +66,7 @@ app.use(express.static('public'));
 //フォームの値を受け取れるようにしたやつ
 app.use(express.urlencoded({extended: false}));
 
-// MYSQL接続情報をプールに変更
-const pool = mysql.createPool({
-    host: '192.168.10.7',
-    user: 'test',
-    password: 'test',
-    database: 'web_app',
-    charset: 'utf8mb4',
-    connectionLimit: 10, // プール内の最大接続数
-});
-// プールを使ったクエリ関数の作成
-const queryDatabase = (query, params) => {
-    return new Promise((resolve, reject) => {
-        pool.query(query, params, (error, results) => {
-            if (error) {
-                return reject(error);
-            }
-            resolve(results);
-        });
-    });
-};
+
 
 //セッション使用準備
 app.use(
